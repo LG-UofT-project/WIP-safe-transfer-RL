@@ -1,7 +1,7 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from rl_gat.reinforcedgat import ReinforcedGAT
-import gym, os, glob, shutil
+import gym, os, glob, shutil, safety_gym
 import numpy as np
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import SubprocVecEnv
@@ -88,8 +88,10 @@ def main():
     parser.add_argument('--n_trainsteps_target_policy', default=1000000, type=int, help="Number of time steps to train the agent policy in the grounded environment")
     parser.add_argument('--n_trainsteps_action_tf_policy', default=1000000, type=int, help="Timesteps to train the Action Transformer policy in the ATPEnvironment")
     parser.add_argument('--num_cores', default=10, type=int, help="Number of threads to use while collecting real world experience")
-    parser.add_argument('--sim_env', default='InvertedPendulum-v2', help="Name of the simulator environment (Unmodified)")
-    parser.add_argument('--real_env', default='InvertedPendulumModified-v2', help="Name of the Real World environment (Modified)")
+    parser.add_argument('--sim_env', default='Safexp-PointGoal1-v0', help="Name of the simulator environment (Unmodified)")
+    parser.add_argument('--real_env', default='Safexp-PointGoal2-v0', help="Name of the Real World environment (Modified)")
+    # parser.add_argument('--sim_env', default='InvertedPendulum-v2', help="Name of the simulator environment (Unmodified)")
+    # parser.add_argument('--real_env', default='InvertedPendulumModified-v2', help="Name of the Real World environment (Modified)")
     parser.add_argument('--n_frames', default=1, type=int, help="Number of previous frames observed by discriminator")
     parser.add_argument('--expt_number', default=1, type=int, help="Expt. number to keep track of multiple experiments")
     parser.add_argument('--n_grounding_steps', default=1, type=int, help="Number of grounding steps. (Outerloop of algorithm ) ")

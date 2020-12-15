@@ -1,4 +1,4 @@
-import rl_gat.envs
+# import rl_gat.envs
 from gym.envs.registration import register
 from rl_gat import *
 from pybullet_envs import *
