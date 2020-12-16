@@ -575,7 +575,7 @@ class ReinforcedGAT:
 
         # using custom mujoco normalization scheme
         self.mujoco_norm = False
-        if 'mujoco_norm' in load_policy: self.mujoco_norm = True
+        # if 'mujoco_norm' in load_policy: self.mujoco_norm = True
 
 
         # if 'Dart' in self.real_env_name:
@@ -659,6 +659,11 @@ class ReinforcedGAT:
 
     def _init_target_policy(self, load_policy, algo, env=None, tensorboard=False):
 
+        with open('data/target_policy_params.yaml') as file:
+            args = yaml.load(file, Loader=yaml.FullLoader)
+
+        self.target_policy_norm_obs = None
+
         if env is None: env = self.saved_env
 
         if load_policy is None:
@@ -683,6 +688,27 @@ class ReinforcedGAT:
                     learning_rate=0.001,
                     action_noise=action_noise,
                     buffer_size=1000000
+                )
+            elif algo == "TRPO":
+                print('Using TRPO as the Target Policy Algo')
+
+                args = args['TRPO'][self.env_name]
+
+                self.target_policy = TRPO(
+                    OtherMlpPolicy,
+                    env=DummyVecEnv([lambda:env]),
+                    verbose=1,
+                    # disabled tensorboard temporarily
+                    tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
+                    timesteps_per_batch=args['timesteps_per_batch'],
+                    lam=args['lam'],
+                    max_kl=args['max_kl'],
+                    gamma=args['gamma'],
+                    vf_iters=args['vf_iters'],
+                    vf_stepsize=args['vf_stepsize'],
+                    entcoeff=args['entcoeff'],
+                    cg_damping=args['cg_damping'],
+                    cg_iters=args['cg_iters']
                 )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported")

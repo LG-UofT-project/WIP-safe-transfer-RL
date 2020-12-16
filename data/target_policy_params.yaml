@@ -203,6 +203,18 @@ PPO2:
 
 
 TRPO :
+  Safexp-PointGoal1-v0:
+    timesteps_per_batch: 5000
+    lam: 0.9
+    gamma: 0.98
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters : 10
+    vf_stepsize : 0.00428
+    learning_rate: 0.0004
+    cg_damping : 0.000235
+    cg_iters : 20
+
   InvertedPendulum-v2:
     timesteps_per_batch: 5000
     lam: 0.9
