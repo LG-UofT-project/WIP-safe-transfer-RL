@@ -1355,7 +1355,8 @@ class ReinforcedGAT:
 
         print('STARTING TO TRAIN THE DISCRIMINATOR')
 
-        print('Num disc updates : ', len(Y_list)/self.single_batch_size)
+        if single_batch_test:
+        	print('Num disc updates : ', len(Y_list)/self.single_batch_size)
 
         self.discriminator_norm_x, _ = train_model_es(
             model=self.discriminator,
