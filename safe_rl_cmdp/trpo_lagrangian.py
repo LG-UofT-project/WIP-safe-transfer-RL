@@ -17,9 +17,8 @@ from stable_baselines.common.cg import conjugate_gradient
 from stable_baselines.common.policies import ActorCriticPolicy
 from stable_baselines.common.misc_util import flatten_lists
 # from stable_baselines.common.runners import traj_segment_generator
-from safe_rl_cmdp.runners_cmdp import traj_segment_generator
-from stable_baselines.trpo_mpi.utils import add_vtarg_and_adv
-
+from runners_cmdp import traj_segment_generator
+from utils import *
 
 class TRPO_lagrangian(ActorCriticRLModel):
     """
@@ -76,7 +75,11 @@ class TRPO_lagrangian(ActorCriticRLModel):
         self.g_step = 1
         self.d_step = 1
         self.d_stepsize = 3e-4
-
+        
+        # Lagrangian Params
+        self.cost_lim = 20
+        
+        
         self.graph = None
         self.sess = None
         self.policy_pi = None
@@ -88,6 +91,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
         self.compute_vflossandgrad = None
         self.d_adam = None
         self.vfadam = None
+        self.vcadam = None
         self.get_flat = None
         self.set_from_flat = None
         self.timed = None
@@ -142,14 +146,17 @@ class TRPO_lagrangian(ActorCriticRLModel):
                 with tf.variable_scope("oldpi", reuse=False):
                     old_policy = self.policy(self.sess, self.observation_space, self.action_space, self.n_envs, 1,
                                              None, reuse=False, **self.policy_kwargs)
-
+                
+                # Network for safety value function
+                with tf.variable_Scope("vc",reuse=False):                    
+                    self.cost_value = MLPValue(self.sess, self.observation_spacem, self.n_envs, 1, None)
+                
                 with tf.variable_scope("loss", reuse=False):
                     atarg = tf.placeholder(dtype=tf.float32, shape=[None])  # Target advantage function (if applicable)
                     ret = tf.placeholder(dtype=tf.float32, shape=[None])  # Empirical return
-
-                    observation = self.policy_pi.obs_ph
-                    action = self.policy_pi.pdtype.sample_placeholder([None])
-
+                    catarg = tf.placeholder(dytpe=tf.float32, shape=[None]) # Target cost advantage function
+                    cret = tf.placeholder(dtype=tf.float32, shape=[None]) # Empirical cost
+                    observation = self.policy_pi.obs_ph 
                     kloldnew = old_policy.proba_distribution.kl(self.policy_pi.proba_distribution)
                     ent = self.policy_pi.proba_distribution.entropy()
                     meankl = tf.reduce_mean(kloldnew)
@@ -157,12 +164,29 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     entbonus = self.entcoeff * meanent
 
                     vferr = tf.reduce_mean(tf.square(self.policy_pi.value_flat - ret))
-
+                    vcerr = tf.reduce_mean(tf.square(self.cost_value.vc - cret))                    
+                    
                     # advantage * pnew / pold
                     ratio = tf.exp(self.policy_pi.proba_distribution.logp(action) -
                                    old_policy.proba_distribution.logp(action))
                     surrgain = tf.reduce_mean(ratio * atarg)
+                    
+                    # Surrogate for cost function
+                    surrcost = tf.reduce_mean(ratio * catarg)
+                    
+                    # Penalty term in constrained objective
+                    with tf.variable_scope('penalty'):
+                        param_init = np.log(max(np.exp(penalty_init)-1, 1e-8))
+                        penalty_param = tf.get_variable('penalty_param',
+                                          initializer=float(param_init),
+                                          trainable=True,
+                                          dtype=tf.float32)
+                        penalty = tf.nn.softplus(penalty_param)
+                    
+                    penalty_loss = -penalty_param * (cret - self.cost_lim)
 
+                    
+                    
                     optimgain = surrgain + entbonus
                     losses = [optimgain, meankl, entbonus, surrgain, meanent]
                     self.loss_names = ["optimgain", "meankl", "entloss", "surrgain", "entropy"]
@@ -172,7 +196,9 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     all_var_list = tf_util.get_trainable_vars("model")
                     var_list = [v for v in all_var_list if "/vf" not in v.name and "/q/" not in v.name]
                     vf_var_list = [v for v in all_var_list if "/pi" not in v.name and "/logstd" not in v.name]
-
+                    
+                    #vc_var_list = [v for v in tf_util.get_trainable_vars("vc") if "vc" in v.name]
+                    
                     self.get_flat = tf_util.GetFlat(var_list, sess=self.sess)
                     self.set_from_flat = tf_util.SetFromFlat(var_list, sess=self.sess)
 
@@ -236,6 +262,8 @@ class TRPO_lagrangian(ActorCriticRLModel):
                         self.d_adam = MpiAdam(self.reward_giver.get_trainable_variables(), sess=self.sess)
                         self.d_adam.sync()
                     self.vfadam.sync()
+                    #self.vcadam = MpiAdam(vc_var_list, sess=self.sess)
+                    #self.vcadam.sync()
 
                 with tf.variable_scope("input_info", reuse=False):
                     tf.summary.scalar('discounted_rewards', tf.reduce_mean(ret))
@@ -283,7 +311,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
             with self.sess.as_default():
                 callback.on_training_start(locals(), globals())
 
-                seg_gen = traj_segment_generator(self.policy_pi, self.env, self.timesteps_per_batch,
+                seg_gen = traj_segment_generator(self.policy_pi, self.env, self.timesteps_per_batch, self.vc,
                                                  reward_giver=self.reward_giver,
                                                  gail=self.using_gail, callback=callback)
 
@@ -323,6 +351,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     mean_losses = None
                     vpredbefore = None
                     tdlamret = None
+                    tdlamcost = None
                     observation = None
                     action = None
                     seg = None
@@ -335,13 +364,18 @@ class TRPO_lagrangian(ActorCriticRLModel):
                             break
 
                         add_vtarg_and_adv(seg, self.gamma, self.lam)
+                        #add_vctarg_and_cadv(seg, self.gamma, self.lam)
                         # ob, ac, atarg, ret, td1ret = map(np.concatenate, (obs, acs, atargs, rets, td1rets))
                         observation, action = seg["observations"], seg["actions"]
                         atarg, tdlamret = seg["adv"], seg["tdlamret"]
+                        #catarg, tdlamcost = seg["cadv"], seg["tdlamcost"]
 
 
                         vpredbefore = seg["vpred"]  # predicted value function before update
+                        vcpredbefore = seg["vcpred"] # predicted cost value function before update
                         atarg = (atarg - atarg.mean()) / (atarg.std() + 1e-8)  # standardized advantage function estimate
+                        
+                        #catarg = (catarg - catarg.mean()) / (catarg.std() + 1e-8) # Cost advantage function estimate
 
                         # true_rew is the reward without discount
                         if writer is not None:
