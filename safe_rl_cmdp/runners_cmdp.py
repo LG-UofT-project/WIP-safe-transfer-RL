@@ -55,7 +55,7 @@ class AbstractEnvRunner(ABC):
         raise NotImplementedError
 
 
-def traj_segment_generator(policy, env, horizon, vc ,reward_giver=None, gail=False, constrained = False ,callback=None):
+def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, constrained = False ,callback=None):
     """
     Compute target value using TD(lambda) estimator, and advantage with GAE(lambda)
     :param policy: (MLPPolicy) the policy
@@ -116,7 +116,7 @@ def traj_segment_generator(policy, env, horizon, vc ,reward_giver=None, gail=Fal
     callback.on_rollout_start()
 
     while True:
-        action, vpred, states, _ = policy.step(observation.reshape(-1, *observation.shape), states, done)
+        action, vpred, vcpred, states, _ = policy.step(observation.reshape(-1, *observation.shape), states, done)
         # Slight weirdness here because we need value function at time T
         # before returning segment [0, T-1] so we get the correct
         # terminal value
@@ -141,8 +141,8 @@ def traj_segment_generator(policy, env, horizon, vc ,reward_giver=None, gail=Fal
                     "total_timestep": current_it_len,
                     'continue_training': True
             }
-            _, vpred, _, _ = policy.step(observation.reshape(-1, *observation.shape))
-            vcpred = vc.step(observation.reshape(-1, *observation.shape))
+            _, vpred, vcpred, _, _ = policy.step(observation.reshape(-1, *observation.shape))
+            # vcpred = vc.step(observation.reshape(-1, *observation.shape))
             # Be careful!!! if you change the downstream algorithm to aggregate
             # several of these batches, then be sure to do a deepcopy
             ep_rets = []
@@ -171,7 +171,7 @@ def traj_segment_generator(policy, env, horizon, vc ,reward_giver=None, gail=Fal
             observation, reward, done, info = env.step(clipped_action[0])
             true_reward = reward
             if constrained:
-              cost = info.get('cost',0)
+              cost = info.get('cost', 0)
             else:
               cost = 0
 

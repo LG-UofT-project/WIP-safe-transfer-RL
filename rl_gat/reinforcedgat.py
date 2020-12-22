@@ -31,6 +31,8 @@ from rl_gat.gat import Net, unapply_norm
 import yaml, sys
 from scripts.utils import MujocoNormalized
 import pickle
+from safe_rl_cmdp.trpo_lagrangian import TRPO_lagrangian
+from safe_rl_cmdp.utils import FeedForwardWithSafeValue
 
 class Unbuffered(object):
    def __init__(self, stream):
@@ -710,6 +712,30 @@ class ReinforcedGAT:
                     cg_damping=args['cg_damping'],
                     cg_iters=args['cg_iters']
                 )
+            elif algo == "TRPO-lagrangian":
+                print('Using TRPO-lagrangian as the Target Policy Algo')
+
+                args = args['TRPO-lagrangian'][self.env_name]
+
+                self.target_policy = TRPO_lagrangian(
+                    FeedForwardWithSafeValue,
+                    env=DummyVecEnv([lambda:env]),
+                    verbose=1,
+                    # disabled tensorboard temporarily
+                    tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
+                    timesteps_per_batch=args['timesteps_per_batch'],
+                    lam=args['lam'],
+                    max_kl=args['max_kl'],
+                    gamma=args['gamma'],
+                    vf_iters=args['vf_iters'],
+                    vf_stepsize=args['vf_stepsize'],
+                    entcoeff=args['entcoeff'],
+                    cg_damping=args['cg_damping'],
+                    cg_iters=args['cg_iters'],
+                    cost_lim = args['cost_lim'],
+                    penalty_init = args['penalty_init'],
+                    penalty_lr = args['penalty_lr']
+                )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported")
         else:
@@ -795,7 +821,30 @@ class ReinforcedGAT:
                     cg_damping=args['cg_damping'],
                     cg_iters=args['cg_iters']
                 )
+            elif algo == "TRPO-lagrangian":
+                print('Using TRPO-lagrangian as the Target Policy Algo')
 
+                args = args['TRPO-lagrangian'][self.env_name]
+
+                self.target_policy = TRPO_lagrangian(
+                    load_policy,
+                    # env=DummyVecEnv([lambda:env]),
+                    verbose=1,
+                    # disabled tensorboard temporarily
+                    tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
+                    timesteps_per_batch=args['timesteps_per_batch'],
+                    lam=args['lam'],
+                    max_kl=args['max_kl'],
+                    gamma=args['gamma'],
+                    vf_iters=args['vf_iters'],
+                    vf_stepsize=args['vf_stepsize'],
+                    entcoeff=args['entcoeff'],
+                    cg_damping=args['cg_damping'],
+                    cg_iters=args['cg_iters'],
+                    cost_lim = args['cost_lim'],
+                    penalty_init = args['penalty_init'],
+                    penalty_lr = args['penalty_lr']
+                )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported yet")
 
@@ -1356,7 +1405,7 @@ class ReinforcedGAT:
         print('STARTING TO TRAIN THE DISCRIMINATOR')
 
         if single_batch_test:
-        	print('Num disc updates : ', len(Y_list)/self.single_batch_size)
+            print('Num disc updates : ', len(Y_list)/self.single_batch_size)
 
         self.discriminator_norm_x, _ = train_model_es(
             model=self.discriminator,

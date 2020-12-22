@@ -80,7 +80,7 @@ def main():
     # expt_label = input('Enter a label for the experiment : ')
 
     parser = argparse.ArgumentParser(description='Reinforced Grounded Action Transformation')
-    parser.add_argument('--target_policy_algo', default="TRPO", type=str, help="name in str of the agent policy training algorithm")
+    parser.add_argument('--target_policy_algo', default="TRPO-lagrangian", type=str, help="name in str of the agent policy training algorithm")
     parser.add_argument('--action_tf_policy_algo', default="PPO2", type=str, help="name in str of the Action Transformer policy training algorithm")
     parser.add_argument('--load_policy_path', default=None, help="relative path of initial policy trained in sim")
     # parser.add_argument('--load_policy_path', default='data/models/TRPO_initial_policy_steps_Hopper-v2_1000000_.pkl', help="relative path of initial policy trained in sim")

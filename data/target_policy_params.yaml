@@ -580,5 +580,226 @@ TD3:
     noise_type: 'normal'
     train_freq: 1000
 
+TRPO-lagrangian :
+  # Copy and paste from TRPO
+  Safexp-PointGoal1-v0:
+    timesteps_per_batch: 5000
+    lam: 0.9
+    gamma: 0.98
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters : 10
+    vf_stepsize : 0.00428
+    learning_rate: 0.0004
+    cg_damping : 0.000235
+    cg_iters : 20
+    cost_lim : 20
+    penalty_init : 1.0
+    penalty_lr : 0.05
 
+  InvertedPendulum-v2:
+    timesteps_per_batch: 5000
+    lam: 0.9
+    gamma: 0.98
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters : 10
+    vf_stepsize : 0.00428
+    learning_rate: 0.0004
+    cg_damping : 0.000235
+    cg_iters : 20
+
+  Humanoid-v2:
+    timesteps_per_batch: 2048
+    lam: 0.98
+    gamma: 0.99
+    max_kl: 0.005
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.003
+    learning_rate: 0.0004
+    cg_damping: 0.1
+    cg_iters: 15
+
+  Hopper-v2:
+    timesteps_per_batch: 5000
+    lam: 0.97
+    gamma: 0.995
+    max_kl: 0.01
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0004
+    cg_damping: 0.1
+    cg_iters: 20
+
+  HopperArmatureModified-v2:
+    timesteps_per_batch: 5000
+    lam: 0.97
+    gamma: 0.995
+    max_kl: 0.003
+    entcoeff: 0.0
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0004
+    cg_damping: 0.1
+    cg_iters: 20
+
+  MinitaurBulletEnv-v0:
+    timesteps_per_batch: 2048
+    lam: 0.97
+    gamma: 0.995
+    max_kl: 0.01
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0025
+    cg_damping: 0.1
+    cg_iters: 20
+
+  AntPyBulletEnv-v0:
+    timesteps_per_batch: 2048
+    lam: 0.97
+    gamma: 0.995
+    max_kl: 0.01
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0025
+    cg_damping: 0.1
+    cg_iters: 20
+
+  AntModifiedBulletEnv-v0:
+    timesteps_per_batch: 2048
+    lam: 0.97
+    gamma: 0.995
+    max_kl: 0.01
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0025
+    cg_damping: 0.1
+    cg_iters: 20
+
+  MinitaurRealBulletEnv-v0:
+    timesteps_per_batch: 2048
+    lam: 0.97
+    gamma: 0.995
+    max_kl: 0.01
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0025
+    cg_damping: 0.1
+    cg_iters: 20
+
+  MinitaurInaccurateMotorBulletEnv-v0:
+    timesteps_per_batch: 2048
+    lam: 0.97
+    gamma: 0.995
+    max_kl: 0.01
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0025
+    cg_damping: 0.1
+    cg_iters: 20
+
+  DartHopper-v1:
+    timesteps_per_batch: 5000
+    lam: 0.97
+    gamma: 0.995
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0004
+    cg_damping: 0.1
+    cg_iters: 20
+
+  Ant-v2:
+    timesteps_per_batch: 5000
+    lam: 0.95
+    gamma: 0.99
+    max_kl: 0.01
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0004
+    cg_damping: 0.1
+    cg_iters: 20
+
+  Walker2d-v2:
+    timesteps_per_batch: 5000
+    lam: 0.98
+    gamma: 0.99
+    max_kl: 0.01
+    entcoeff: 0.01
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0004
+    cg_damping: 0.1
+    cg_iters: 20
+
+  LunarLander-v2:
+    timesteps_per_batch: 1024
+    lam: 0.98
+    gamma: 0.99
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters : 5
+    vf_stepsize : 0.001
+    learning_rate: 0.0004
+    cg_damping : 0.1
+    cg_iters : 10
+
+  # All data below has not been updated yet
+  # Update the values from here : https://github.com/araffin/rl-baselines-zoo/blob/master/hyperparams/trpo.yml
+  InvertedDoublePendulum-v2:
+    timesteps_per_batch: 1024
+    lam: 0.98
+    gamma: 0.99
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters: 5
+    vf_stepsize: 0.0003
+    learning_rate: 0.0004
+    cg_damping: 0.1
+    cg_iters: 15
+
+  HalfCheetah-v2:
+    timesteps_per_batch: 2048
+    lam: 0.95
+    gamma: 0.99
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters: 5
+    vf_stepsize: 0.001
+    learning_rate: 0.0004
+    cg_damping: 0.1
+    cg_iters: 15
+
+  BipedalWalker-v2:
+    timesteps_per_batch: 1024
+    lam: 0.98
+    gamma: 0.99
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters: 3
+    vf_stepsize: 0.0003
+    learning_rate: 0.0004
+    cg_damping: 0.01
+    cg_iters: 10
+
+  Reacher-v2:
+    timesteps_per_batch: 1024
+    lam: 0.98
+    gamma: 0.99
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters: 3
+    vf_stepsize: 0.0003
+    learning_rate: 0.0004
+    cg_damping: 0.01
+    cg_iters: 10
 

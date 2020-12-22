@@ -16,9 +16,8 @@ from stable_baselines.common.mpi_adam import MpiAdam
 from stable_baselines.common.cg import conjugate_gradient
 from stable_baselines.common.policies import ActorCriticPolicy
 from stable_baselines.common.misc_util import flatten_lists
-# from stable_baselines.common.runners import traj_segment_generator
-from runners_cmdp import traj_segment_generator
-from utils import *
+from safe_rl_cmdp.runners_cmdp import traj_segment_generator
+from safe_rl_cmdp.utils import add_vtarg_and_adv, add_vctarg_and_cadv
 
 class TRPO_lagrangian(ActorCriticRLModel):
     """
@@ -48,7 +47,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
         If None, the number of cpu of the current machine will be used.
     """
     def __init__(self, policy, env, gamma=0.99, timesteps_per_batch=1024, max_kl=0.01, cg_iters=10, lam=0.98,
-                 entcoeff=0.0, cg_damping=1e-2, vf_stepsize=3e-4, vf_iters=3, verbose=0, tensorboard_log=None,
+                 entcoeff=0.0, cg_damping=1e-2, cost_lim = 20, penalty_init = 1., penalty_lr=5e-2, vf_stepsize=3e-4, vf_iters=3, verbose=0, tensorboard_log=None,
                  _init_setup_model=True, policy_kwargs=None, full_tensorboard_log=False,
                  seed=None, n_cpu_tf_sess=1):
         super(TRPO_lagrangian, self).__init__(policy=policy, env=env, verbose=verbose, requires_vec_env=False,
@@ -77,8 +76,9 @@ class TRPO_lagrangian(ActorCriticRLModel):
         self.d_stepsize = 3e-4
         
         # Lagrangian Params
-        self.cost_lim = 20
-        
+        self.cost_lim = cost_lim
+        self.penalty_init = penalty_init,
+        self.penalty_lr = penalty_lr
         
         self.graph = None
         self.sess = None
@@ -89,6 +89,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
         self.compute_lossandgrad = None
         self.compute_fvp = None
         self.compute_vflossandgrad = None
+        self.compute_vcflossandgrad = None
         self.d_adam = None
         self.vfadam = None
         self.vcadam = None
@@ -138,6 +139,18 @@ class TRPO_lagrangian(ActorCriticRLModel):
                                                              self.hidden_size_adversary,
                                                              entcoeff=self.adversary_entcoeff)
 
+                # Penalty related variable
+                with tf.variable_scope('penalty'):
+                    cur_cost_ph = tf.placeholder(dtype=tf.float32, shape=[None]) # episodic cost
+
+                    param_init = np.log(max(np.exp(self.penalty_init) - 1, 1e-8))
+                    penalty_param = tf.get_variable('penalty_param',
+                                                    initializer=float(param_init),
+                                                    trainable=True,
+                                                    dtype=tf.float32)
+                penalty = tf.nn.softplus(penalty_param)
+                penalty_loss = -penalty_param * (cur_cost_ph - self.cost_lim)
+
                 # Construct network for new policy
                 self.policy_pi = self.policy(self.sess, self.observation_space, self.action_space, self.n_envs, 1,
                                              None, reuse=False, **self.policy_kwargs)
@@ -147,16 +160,19 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     old_policy = self.policy(self.sess, self.observation_space, self.action_space, self.n_envs, 1,
                                              None, reuse=False, **self.policy_kwargs)
                 
-                # Network for safety value function
-                with tf.variable_Scope("vc",reuse=False):                    
-                    self.cost_value = MLPValue(self.sess, self.observation_spacem, self.n_envs, 1, None)
+                # # Network for safety value function
+                # with tf.variable_Scope("vc",reuse=False):
+                #     self.cost_value = MLPValue(self.sess, self.observation_spacem, self.n_envs, 1, None)
                 
                 with tf.variable_scope("loss", reuse=False):
                     atarg = tf.placeholder(dtype=tf.float32, shape=[None])  # Target advantage function (if applicable)
                     ret = tf.placeholder(dtype=tf.float32, shape=[None])  # Empirical return
                     catarg = tf.placeholder(dytpe=tf.float32, shape=[None]) # Target cost advantage function
                     cret = tf.placeholder(dtype=tf.float32, shape=[None]) # Empirical cost
-                    observation = self.policy_pi.obs_ph 
+
+                    observation = self.policy_pi.obs_ph
+                    action = self.policy_pi.pdtype.sample_placeholder([None])
+
                     kloldnew = old_policy.proba_distribution.kl(self.policy_pi.proba_distribution)
                     ent = self.policy_pi.proba_distribution.entropy()
                     meankl = tf.reduce_mean(kloldnew)
@@ -164,39 +180,43 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     entbonus = self.entcoeff * meanent
 
                     vferr = tf.reduce_mean(tf.square(self.policy_pi.value_flat - ret))
-                    vcerr = tf.reduce_mean(tf.square(self.cost_value.vc - cret))                    
+                    vcerr = tf.reduce_mean(tf.square(self.policy_pi.vcf_flat - cret))
                     
                     # advantage * pnew / pold
                     ratio = tf.exp(self.policy_pi.proba_distribution.logp(action) -
                                    old_policy.proba_distribution.logp(action))
                     surrgain = tf.reduce_mean(ratio * atarg)
-                    
                     # Surrogate for cost function
                     surrcost = tf.reduce_mean(ratio * catarg)
-                    
-                    # Penalty term in constrained objective
-                    with tf.variable_scope('penalty'):
-                        param_init = np.log(max(np.exp(penalty_init)-1, 1e-8))
-                        penalty_param = tf.get_variable('penalty_param',
-                                          initializer=float(param_init),
-                                          trainable=True,
-                                          dtype=tf.float32)
-                        penalty = tf.nn.softplus(penalty_param)
-                    
-                    penalty_loss = -penalty_param * (cret - self.cost_lim)
 
-                    
-                    
                     optimgain = surrgain + entbonus
-                    losses = [optimgain, meankl, entbonus, surrgain, meanent]
-                    self.loss_names = ["optimgain", "meankl", "entloss", "surrgain", "entropy"]
+                    # Include surr_cost in pi_objective
+                    optimgain -= penalty * surrcost
+                    optimgain /= (1 + penalty)
+                    # # Loss function for pi is negative of pi_objective
+                    # optimgain = -optimgain # Should we??
+
+                    # # Penalty term in constrained objective
+                    # with tf.variable_scope('penalty'):
+                    #     param_init = np.log(max(np.exp(penalty_init)-1, 1e-8))
+                    #     penalty_param = tf.get_variable('penalty_param',
+                    #                       initializer=float(param_init),
+                    #                       trainable=True,
+                    #                       dtype=tf.float32)
+                    #     penalty = tf.nn.softplus(penalty_param)
+                    #
+                    # penalty_loss = -penalty_param * (cret - self.cost_lim)
+                    
+                    losses = [optimgain, meankl, entbonus, surrgain, meanent, surrcost]
+                    self.loss_names = ["optimgain", "meankl", "entloss", "surrgain", "entropy", "surrcost"]
 
                     dist = meankl
 
                     all_var_list = tf_util.get_trainable_vars("model")
-                    var_list = [v for v in all_var_list if "/vf" not in v.name and "/q/" not in v.name]
-                    vf_var_list = [v for v in all_var_list if "/pi" not in v.name and "/logstd" not in v.name]
-                    
+                    var_list = [v for v in all_var_list if "/vf" not in v.name and "/q/" not in v.name and "/vcf" not in v.name] # policy parameters
+                    vf_var_list = [v for v in all_var_list if "/pi" not in v.name and "/logstd" not in v.name and "/vcf" not in v.name] # value parameters
+                    vcf_var_list = [v for v in all_var_list if "/pi" not in v.name and "/logstd" not in v.name and "/vf" not in v.name] # cost value parameters
+
                     #vc_var_list = [v for v in tf_util.get_trainable_vars("vc") if "vc" in v.name]
                     
                     self.get_flat = tf_util.GetFlat(var_list, sess=self.sess)
@@ -216,21 +236,27 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     # Fisher vector products
                     fvp = tf_util.flatgrad(gvp, var_list)
 
+                    tf.summary.scalar('penalty_loss', penalty_loss)
                     tf.summary.scalar('entropy_loss', meanent)
                     tf.summary.scalar('policy_gradient_loss', optimgain)
                     tf.summary.scalar('value_function_loss', surrgain)
+                    tf.summary.scalar('constraint_cost_function_loss', surrcost)
                     tf.summary.scalar('approximate_kullback-leibler', meankl)
-                    tf.summary.scalar('loss', optimgain + meankl + entbonus + surrgain + meanent)
+                    tf.summary.scalar('loss', optimgain + meankl + entbonus + surrgain + meanent + surrcost + penalty_loss)
 
                     self.assign_old_eq_new = \
                         tf_util.function([], [], updates=[tf.assign(oldv, newv) for (oldv, newv) in
                                                           zipsame(tf_util.get_globals_vars("oldpi"),
                                                                   tf_util.get_globals_vars("model"))])
-                    self.compute_losses = tf_util.function([observation, old_policy.obs_ph, action, atarg], losses)
-                    self.compute_fvp = tf_util.function([flat_tangent, observation, old_policy.obs_ph, action, atarg],
-                                                        fvp)
+                    self.compute_losses = tf_util.function([observation, old_policy.obs_ph, action, atarg, catarg], losses)
+                    self.compute_fvp = tf_util.function([flat_tangent, observation, old_policy.obs_ph, action, atarg, catarg],
+                                                        fvp) # Why need all inputs? Might for implementation easiness
                     self.compute_vflossandgrad = tf_util.function([observation, old_policy.obs_ph, ret],
-                                                                  tf_util.flatgrad(vferr, vf_var_list))
+                                                                  tf_util.flatgrad(vferr, vf_var_list)) # Why need old_policy.obs_ph? Doesn't seem to be used
+                    self.compute_vcflossandgrad = tf_util.function([observation, old_policy.obs_ph, cret],
+                                                                  tf_util.flatgrad(vcerr, vcf_var_list))
+                    self.compute_lagrangiangrad = tf.util.function([cur_cost_ph],
+                                                                   tf_util.flatgrad(penalty_loss, penalty_param))
 
                     @contextmanager
                     def timed(msg):
@@ -262,19 +288,28 @@ class TRPO_lagrangian(ActorCriticRLModel):
                         self.d_adam = MpiAdam(self.reward_giver.get_trainable_variables(), sess=self.sess)
                         self.d_adam.sync()
                     self.vfadam.sync()
-                    #self.vcadam = MpiAdam(vc_var_list, sess=self.sess)
-                    #self.vcadam.sync()
+                    # optimizer for constraint costs value function
+                    self.vcadam = MpiAdam(vcf_var_list, sess=self.sess)
+                    self.vcadam.sync()
+                    # optimizer for lagragian value of safe RL
+                    self.penaltyadam = MpiAdam(penalty_param, sess=self.sess)
+                    self.penaltyadam.sync()
 
                 with tf.variable_scope("input_info", reuse=False):
                     tf.summary.scalar('discounted_rewards', tf.reduce_mean(ret))
+                    tf.summary.scalar('discounted_costs', tf.reduce_mean(cret))
                     tf.summary.scalar('learning_rate', tf.reduce_mean(self.vf_stepsize))
                     tf.summary.scalar('advantage', tf.reduce_mean(atarg))
+                    tf.summary.scalar('cost_advantage', tf.reduce_mean(catarg))
                     tf.summary.scalar('kl_clip_range', tf.reduce_mean(self.max_kl))
 
                     if self.full_tensorboard_log:
                         tf.summary.histogram('discounted_rewards', ret)
+                        tf.summary.histogram('discounted_rewards', cret)
                         tf.summary.histogram('learning_rate', self.vf_stepsize)
+                        tf.summary.histogram('penalty_learning_rate', self.penalty_lr)
                         tf.summary.histogram('advantage', atarg)
+                        tf.summary.histogram('cost_advantage', catarg)
                         tf.summary.histogram('kl_clip_range', self.max_kl)
                         if tf_util.is_image(self.observation_space):
                             tf.summary.image('observation', observation)
@@ -295,10 +330,10 @@ class TRPO_lagrangian(ActorCriticRLModel):
                 self.summary = tf.summary.merge_all()
 
                 self.compute_lossandgrad = \
-                    tf_util.function([observation, old_policy.obs_ph, action, atarg, ret],
+                    tf_util.function([observation, old_policy.obs_ph, action, atarg, catarg, ret, cret, cur_cost_ph],
                                      [self.summary, tf_util.flatgrad(optimgain, var_list)] + losses)
 
-    def learn(self, total_timesteps, callback=None, log_interval=100, tb_log_name="TRPO",
+    def learn(self, total_timesteps, callback=None, log_interval=100, tb_log_name="TRPO-lagrangian",
               reset_num_timesteps=True):
 
         new_tb_log = self._init_num_timesteps(reset_num_timesteps)
@@ -311,7 +346,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
             with self.sess.as_default():
                 callback.on_training_start(locals(), globals())
 
-                seg_gen = traj_segment_generator(self.policy_pi, self.env, self.timesteps_per_batch, self.vc,
+                seg_gen = traj_segment_generator(self.policy_pi, self.env, self.timesteps_per_batch, True,
                                                  reward_giver=self.reward_giver,
                                                  gail=self.using_gail, callback=callback)
 
@@ -321,6 +356,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
                 t_start = time.time()
                 len_buffer = deque(maxlen=40)  # rolling buffer for episode lengths
                 reward_buffer = deque(maxlen=40)  # rolling buffer for episode rewards
+                cost_buffer = deque(maxlen=40)  # rolling buffer for episode costs
 
                 true_reward_buffer = None
                 if self.using_gail:
@@ -350,6 +386,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     # g_step = 1 when not using GAIL
                     mean_losses = None
                     vpredbefore = None
+                    vcpredbefore = None
                     tdlamret = None
                     tdlamcost = None
                     observation = None
@@ -364,18 +401,17 @@ class TRPO_lagrangian(ActorCriticRLModel):
                             break
 
                         add_vtarg_and_adv(seg, self.gamma, self.lam)
-                        #add_vctarg_and_cadv(seg, self.gamma, self.lam)
+                        add_vctarg_and_cadv(seg, self.gamma, self.lam)
                         # ob, ac, atarg, ret, td1ret = map(np.concatenate, (obs, acs, atargs, rets, td1rets))
                         observation, action = seg["observations"], seg["actions"]
                         atarg, tdlamret = seg["adv"], seg["tdlamret"]
-                        #catarg, tdlamcost = seg["cadv"], seg["tdlamcost"]
+                        catarg, tdlamcost, ep_cost = seg["cadv"], seg["tdlamcost"], seg["ep_costs"]
 
 
                         vpredbefore = seg["vpred"]  # predicted value function before update
                         vcpredbefore = seg["vcpred"] # predicted cost value function before update
                         atarg = (atarg - atarg.mean()) / (atarg.std() + 1e-8)  # standardized advantage function estimate
-                        
-                        #catarg = (catarg - catarg.mean()) / (catarg.std() + 1e-8) # Cost advantage function estimate
+                        catarg = (catarg - catarg.mean()) / (catarg.std() + 1e-8) # Cost advantage function estimate
 
                         # true_rew is the reward without discount
                         if writer is not None:
@@ -385,12 +421,16 @@ class TRPO_lagrangian(ActorCriticRLModel):
                                                         seg["dones"].reshape((self.n_envs, -1)),
                                                         writer, self.num_timesteps)
 
-                        args = seg["observations"], seg["observations"], seg["actions"], atarg
+                        args = seg["observations"], seg["observations"], seg["actions"], atarg, catarg
                         # Subsampling: see p40-42 of John Schulman thesis
                         # http://joschu.net/docs/thesis.pdf
                         fvpargs = [arr[::5] for arr in args]
 
                         self.assign_old_eq_new(sess=self.sess)
+
+                        with self.timed("learnpenalty"):
+                            grad = self.compute_lagrangiangrad(ep_cost, sess=self.sess)
+                            self.penaltyadam.update(grad, self.penalty_lr)
 
                         with self.timed("computegrad"):
                             steps = self.num_timesteps + (k + 1) * (seg["total_timestep"] / self.g_step)
@@ -398,14 +438,16 @@ class TRPO_lagrangian(ActorCriticRLModel):
                             run_metadata = tf.RunMetadata() if self.full_tensorboard_log else None
                             # run loss backprop with summary, and save the metadata (memory, compute time, ...)
                             if writer is not None:
-                                summary, grad, *lossbefore = self.compute_lossandgrad(*args, tdlamret, sess=self.sess,
+                                summary, grad, *lossbefore = self.compute_lossandgrad(*args, tdlamret, tdlamcost, ep_cost,
+                                                                                      sess=self.sess,
                                                                                       options=run_options,
                                                                                       run_metadata=run_metadata)
                                 if self.full_tensorboard_log:
                                     writer.add_run_metadata(run_metadata, 'step%d' % steps)
                                 writer.add_summary(summary, steps)
                             else:
-                                _, grad, *lossbefore = self.compute_lossandgrad(*args, tdlamret, sess=self.sess,
+                                _, grad, *lossbefore = self.compute_lossandgrad(*args, tdlamret, tdlamcost, ep_cost,
+                                                                                sess=self.sess,
                                                                                 options=run_options,
                                                                                 run_metadata=run_metadata)
 
@@ -449,22 +491,24 @@ class TRPO_lagrangian(ActorCriticRLModel):
                                 self.set_from_flat(thbefore)
                             if self.nworkers > 1 and iters_so_far % 20 == 0:
                                 # list of tuples
-                                paramsums = MPI.COMM_WORLD.allgather((thnew.sum(), self.vfadam.getflat().sum()))
+                                paramsums = MPI.COMM_WORLD.allgather((thnew.sum(), self.vfadam.getflat().sum(),
+                                                                      self.vcadam.getflat().sum(), self.penaltyadam.getflat().sum())) # Check whether prameters for multiple workers are close enough?
                                 assert all(np.allclose(ps, paramsums[0]) for ps in paramsums[1:])
 
                             for (loss_name, loss_val) in zip(self.loss_names, mean_losses):
                                 logger.record_tabular(loss_name, loss_val)
 
-                        with self.timed("vf"):
+                        with self.timed("vf and vcf"):
                             for _ in range(self.vf_iters):
                                 # NOTE: for recurrent policies, use shuffle=False?
-                                for (mbob, mbret) in dataset.iterbatches((seg["observations"], seg["tdlamret"]),
+                                for (mbob, mbret, mbcret) in dataset.iterbatches((seg["observations"], seg["tdlamret"], seg["tdlamcost"]),
                                                                          include_final_partial_batch=False,
                                                                          batch_size=128,
                                                                          shuffle=True):
                                     grad = self.allmean(self.compute_vflossandgrad(mbob, mbob, mbret, sess=self.sess))
                                     self.vfadam.update(grad, self.vf_stepsize)
-
+                                    grad = self.allmean(self.compute_vcflossandgrad(mbob, mbob, mbcret, sess=self.sess))
+                                    self.vcadam.update(grad, self.vf_stepsize)
 
                     # Stop training early (triggered by the callback)
                     if not seg.get('continue_training', True):  # pytype: disable=attribute-error
@@ -472,6 +516,8 @@ class TRPO_lagrangian(ActorCriticRLModel):
 
                     logger.record_tabular("explained_variance_tdlam_before",
                                           explained_variance(vpredbefore, tdlamret))
+                    logger.record_tabular("explained_variance_tdlamcost_before",
+                                          explained_variance(vcpredbefore, tdlamcost))
 
                     if self.using_gail:
                         # ------------------ Update D ------------------
@@ -510,15 +556,17 @@ class TRPO_lagrangian(ActorCriticRLModel):
                         true_reward_buffer.extend(true_rets)
                     else:
                         # lr: lengths and rewards
-                        lr_local = (seg["ep_lens"], seg["ep_rets"])  # local values
+                        lr_local = (seg["ep_lens"], seg["ep_rets"], seg["ep_costs"])  # local values
                         list_lr_pairs = MPI.COMM_WORLD.allgather(lr_local)  # list of tuples
-                        lens, rews = map(flatten_lists, zip(*list_lr_pairs))
+                        lens, rews, costs = map(flatten_lists, zip(*list_lr_pairs))
                     len_buffer.extend(lens)
                     reward_buffer.extend(rews)
+                    cost_buffer.extend(costs)
 
                     if len(len_buffer) > 0:
                         logger.record_tabular("EpLenMean", np.mean(len_buffer))
                         logger.record_tabular("EpRewMean", np.mean(reward_buffer))
+                        logger.record_tabular("EpCostMean", np.mean(cost_buffer))
                     if self.using_gail:
                         logger.record_tabular("EpTrueRewMean", np.mean(true_reward_buffer))
                     logger.record_tabular("EpThisIter", len(lens))
@@ -552,6 +600,9 @@ class TRPO_lagrangian(ActorCriticRLModel):
             "cg_damping": self.cg_damping,
             "vf_stepsize": self.vf_stepsize,
             "vf_iters": self.vf_iters,
+            "cost_limit": self.cost_lim,
+            "penalty_init": self.penalty_init,
+            "penalty_lr": self.penalty_lr,
             "hidden_size_adversary": self.hidden_size_adversary,
             "adversary_entcoeff": self.adversary_entcoeff,
             "expert_dataset": self.expert_dataset,
