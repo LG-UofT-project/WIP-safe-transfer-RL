@@ -32,7 +32,7 @@ import yaml, sys
 from scripts.utils import MujocoNormalized
 import pickle
 from safe_rl_cmdp.trpo_lagrangian import TRPO_lagrangian
-from safe_rl_cmdp.utils import FeedForwardWithSafeValue
+from safe_rl_cmdp.utils import FeedForwardWithSafeValue, MLPWithSafeValue, CnnWithSafeValue
 
 class Unbuffered(object):
    def __init__(self, stream):
@@ -718,7 +718,7 @@ class ReinforcedGAT:
                 args = args['TRPO-lagrangian'][self.env_name]
 
                 self.target_policy = TRPO_lagrangian(
-                    FeedForwardWithSafeValue,
+                    MLPWithSafeValue,
                     env=DummyVecEnv([lambda:env]),
                     verbose=1,
                     # disabled tensorboard temporarily
@@ -732,9 +732,9 @@ class ReinforcedGAT:
                     entcoeff=args['entcoeff'],
                     cg_damping=args['cg_damping'],
                     cg_iters=args['cg_iters'],
-                    cost_lim = args['cost_lim'],
-                    penalty_init = args['penalty_init'],
-                    penalty_lr = args['penalty_lr']
+                    cost_lim=args['cost_lim'],
+                    penalty_init=args['penalty_init'],
+                    penalty_lr=args['penalty_lr']
                 )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported")

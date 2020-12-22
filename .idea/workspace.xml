@@ -1,22 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0837f052-342d-48ab-8674-d5c4cc45aa25" name="Default Changelist" comment="" />
+    <list default="true" id="0837f052-342d-48ab-8674-d5c4cc45aa25" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/GARAT.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/GARAT.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/models/garat/wed_nightGAIL_sim2real_TRPO_1000000_5000_20_1/commandline_args.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/rl_gat/reinforcedgat.py" beforeDir="false" afterPath="$PROJECT_DIR$/rl_gat/reinforcedgat.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/safe_rl_cmdp/runners_cmdp.py" beforeDir="false" afterPath="$PROJECT_DIR$/safe_rl_cmdp/runners_cmdp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/safe_rl_cmdp/trpo_lagrangian.py" beforeDir="false" afterPath="$PROJECT_DIR$/safe_rl_cmdp/trpo_lagrangian.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/safe_rl_cmdp/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/safe_rl_cmdp/utils.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="ProjectId" id="1l1U1EDOeYoI3ZFySN9YHLQ3zdI" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="PyConsoleConfigurable.Python Console" />
+  </component>
+  <component name="PyConsoleOptionsProvider">
+    <option name="myPythonConsoleState">
+      <console-settings module-name="GARAT" is-module-sdk="true">
+        <option name="myUseModuleSdk" value="true" />
+        <option name="myModuleName" value="GARAT" />
+      </console-settings>
+    </option>
   </component>
   <component name="RunManager" selected="Python.test">
     <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -25,6 +47,7 @@
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="LD_LIBRARY_PATH" value="$LD_LIBRARY_PATH:$USER_HOME$/.mujoco/mujoco200/bin" />
       </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
@@ -41,20 +64,30 @@
       <method v="2" />
     </configuration>
     <configuration name="run_experiments.sh" type="ShConfigurationType" temporary="true">
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
       <option name="SCRIPT_PATH" value="$PROJECT_DIR$/scripts/run_experiments.sh" />
       <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
       <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$/scripts" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
       <option name="INTERPRETER_PATH" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <envs />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Python.test" />
+      <item itemvalue="Shell Script.run_experiments.sh" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Shell Script.run_experiments.sh" />
         <item itemvalue="Python.test" />
+        <item itemvalue="Shell Script.run_experiments.sh" />
       </list>
     </recent_temporary>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -68,42 +101,27 @@
     </task>
     <servers />
   </component>
-  <component name="WindowStateProjectService">
-    <state x="414" y="172" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1607451048407">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="414" y="172" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1607451048407" />
-    <state x="438" y="315" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1606765465277">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="438" y="315" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1606765465277" />
-    <state x="690" y="222" key="FileChooserDialogImpl" timestamp="1607375003658">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="690" y="222" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1607375003658" />
-    <state width="1921" height="277" key="GridCell.Tab.0.bottom" timestamp="1607546613699">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1921" height="277" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1607546613699" />
-    <state width="1921" height="277" key="GridCell.Tab.0.center" timestamp="1607546613698">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1921" height="277" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1607546613698" />
-    <state width="1921" height="277" key="GridCell.Tab.0.left" timestamp="1607546613697">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1921" height="277" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1607546613697" />
-    <state width="1921" height="277" key="GridCell.Tab.0.right" timestamp="1607546613698">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1921" height="277" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1607546613698" />
-    <state x="355" y="78" key="SettingsEditor" timestamp="1607378316520">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="355" y="78" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1607378316520" />
-    <state x="603" y="307" key="com.intellij.ide.util.TipDialog" timestamp="1607546693084">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="603" y="307" key="com.intellij.ide.util.TipDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1607546693084" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/safe_rl_cmdp/trpo_lagrangian.py</url>
+          <line>151</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

@@ -94,6 +94,7 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
     current_it_len = 0  # len of current iteration
     current_ep_len = 0 # len of current episode
     cur_ep_true_ret = 0
+    cur_ep_cost = 0
     ep_true_rets = []
     ep_rets = []  # returns of completed episodes in this segment
     ep_costs = [] # Cost of completed episodes in this segment

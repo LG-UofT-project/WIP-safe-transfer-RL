@@ -160,6 +160,16 @@ class FeedForwardWithSafeValue(ActorCriticPolicy):
     def cost_value(self, obs, state=None, mask=None):
         return self.sess.run(self.vcf_flat, {self.obs_ph: obs})
 
+class MLPWithSafeValue(FeedForwardWithSafeValue):
+    def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, **_kwargs):
+        super(MLPWithSafeValue, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse,
+                                        feature_extraction="mlp", **_kwargs)
+
+class CnnWithSafeValue(FeedForwardWithSafeValue):
+    def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, **_kwargs):
+        super(CnnWithSafeValue, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse,
+                                        feature_extraction="cnn", **_kwargs)
+
 # class MLPValue(ABC):
 #     """
 #     Class for safety value function
@@ -238,5 +248,5 @@ def add_vctarg_and_cadv(seg,cost_gamma,cost_lam):
         nonterminal = 1 - float(episode_starts[step + 1])
         cdelta = costs[step] + cost_gamma * vcpred[step + 1] * nonterminal - vcpred[step]
         seg["cadv"][step] = lastgaelam = cdelta + cost_gamma * cost_lam * nonterminal * lastgaelam
-    seg["tdlamcost"] = seg["cadv"] + seg["cvpred"]
+    seg["tdlamcost"] = seg["cadv"] + seg["vcpred"]
          

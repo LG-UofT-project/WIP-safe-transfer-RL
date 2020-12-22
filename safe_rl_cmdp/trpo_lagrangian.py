@@ -47,7 +47,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
         If None, the number of cpu of the current machine will be used.
     """
     def __init__(self, policy, env, gamma=0.99, timesteps_per_batch=1024, max_kl=0.01, cg_iters=10, lam=0.98,
-                 entcoeff=0.0, cg_damping=1e-2, cost_lim = 20, penalty_init = 1., penalty_lr=5e-2, vf_stepsize=3e-4, vf_iters=3, verbose=0, tensorboard_log=None,
+                 entcoeff=0.0, cg_damping=1e-2, cost_lim=20, penalty_init=1.0, penalty_lr=5e-2, vf_stepsize=3e-4, vf_iters=3, verbose=0, tensorboard_log=None,
                  _init_setup_model=True, policy_kwargs=None, full_tensorboard_log=False,
                  seed=None, n_cpu_tf_sess=1):
         super(TRPO_lagrangian, self).__init__(policy=policy, env=env, verbose=verbose, requires_vec_env=False,
@@ -149,7 +149,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
                                                     trainable=True,
                                                     dtype=tf.float32)
                 penalty = tf.nn.softplus(penalty_param)
-                penalty_loss = -penalty_param * (cur_cost_ph - self.cost_lim)
+                penalty_loss = tf.reduce_mean(-penalty_param * (cur_cost_ph - self.cost_lim))
 
                 # Construct network for new policy
                 self.policy_pi = self.policy(self.sess, self.observation_space, self.action_space, self.n_envs, 1,
@@ -167,7 +167,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
                 with tf.variable_scope("loss", reuse=False):
                     atarg = tf.placeholder(dtype=tf.float32, shape=[None])  # Target advantage function (if applicable)
                     ret = tf.placeholder(dtype=tf.float32, shape=[None])  # Empirical return
-                    catarg = tf.placeholder(dytpe=tf.float32, shape=[None]) # Target cost advantage function
+                    catarg = tf.placeholder(dtype=tf.float32, shape=[None]) # Target cost advantage function
                     cret = tf.placeholder(dtype=tf.float32, shape=[None]) # Empirical cost
 
                     observation = self.policy_pi.obs_ph
@@ -255,8 +255,8 @@ class TRPO_lagrangian(ActorCriticRLModel):
                                                                   tf_util.flatgrad(vferr, vf_var_list)) # Why need old_policy.obs_ph? Doesn't seem to be used
                     self.compute_vcflossandgrad = tf_util.function([observation, old_policy.obs_ph, cret],
                                                                   tf_util.flatgrad(vcerr, vcf_var_list))
-                    self.compute_lagrangiangrad = tf.util.function([cur_cost_ph],
-                                                                   tf_util.flatgrad(penalty_loss, penalty_param))
+                    self.compute_lagrangiangrad = tf_util.function([cur_cost_ph],
+                                                                   tf_util.flatgrad(penalty_loss, [penalty_param]))
 
                     @contextmanager
                     def timed(msg):
@@ -292,7 +292,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     self.vcadam = MpiAdam(vcf_var_list, sess=self.sess)
                     self.vcadam.sync()
                     # optimizer for lagragian value of safe RL
-                    self.penaltyadam = MpiAdam(penalty_param, sess=self.sess)
+                    self.penaltyadam = MpiAdam([penalty_param], sess=self.sess)
                     self.penaltyadam.sync()
 
                 with tf.variable_scope("input_info", reuse=False):
@@ -346,9 +346,9 @@ class TRPO_lagrangian(ActorCriticRLModel):
             with self.sess.as_default():
                 callback.on_training_start(locals(), globals())
 
-                seg_gen = traj_segment_generator(self.policy_pi, self.env, self.timesteps_per_batch, True,
+                seg_gen = traj_segment_generator(self.policy_pi, self.env, self.timesteps_per_batch,
                                                  reward_giver=self.reward_giver,
-                                                 gail=self.using_gail, callback=callback)
+                                                 gail=self.using_gail, constrained=True, callback=callback)
 
                 episodes_so_far = 0
                 timesteps_so_far = 0
@@ -624,3 +624,28 @@ class TRPO_lagrangian(ActorCriticRLModel):
         params_to_save = self.get_parameters()
 
         self._save_to_file(save_path, data=data, params=params_to_save, cloudpickle=cloudpickle)
+
+
+    def predict(self, observation, state=None, mask=None, deterministic=False):
+        # predict function for safeRL when policy.step return vcpred too.
+        if state is None:
+            state = self.initial_state
+        if mask is None:
+            mask = [False for _ in range(self.n_envs)]
+        observation = np.array(observation)
+        vectorized_env = self._is_vectorized_observation(observation, self.observation_space)
+
+        observation = observation.reshape((-1,) + self.observation_space.shape)
+        actions, _, _, states, _ = self.step(observation, state, mask, deterministic=deterministic)
+
+        clipped_actions = actions
+        # Clip the actions to avoid out of bound error
+        if isinstance(self.action_space, gym.spaces.Box):
+            clipped_actions = np.clip(actions, self.action_space.low, self.action_space.high)
+
+        if not vectorized_env:
+            if state is not None:
+                raise ValueError("Error: The environment must be vectorized when using recurrent policies.")
+            clipped_actions = clipped_actions[0]
+
+        return clipped_actions, states
