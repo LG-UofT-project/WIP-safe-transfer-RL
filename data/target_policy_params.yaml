@@ -580,23 +580,52 @@ TD3:
     noise_type: 'normal'
     train_freq: 1000
 
-TRPO-lagrangian :
-  # Copy and paste from TRPO
+TRPO_lagrangian :
   Safexp-PointGoal1-v0:
-    timesteps_per_batch: 5000
-    lam: 0.9
-    gamma: 0.98
+    timesteps_per_batch: 30000 #30000
+    lam: 0.97
+    gamma: 0.99
     max_kl: 0.01
     entcoeff: 0.0
-    vf_iters : 10
-    vf_stepsize : 0.00428
+    vf_iters : 80
+    vf_stepsize : 0.001
     learning_rate: 0.0004
-    cg_damping : 0.000235
-    cg_iters : 20
-    cost_lim : 20
+    cg_damping : 0.1
+    cg_iters : 10 # 20
+    cost_lim : 25
     penalty_init : 1.0
     penalty_lr : 0.05
+#                     max_ep_len=1000,
+#    if robot=='Doggo':
+#        num_steps = 1e8
+#        steps_per_epoch = 60000
+#    else:
+#        num_steps = 1e7
+#        steps_per_epoch = 30000
 
+  Safexp-DoggoGoal1-v0:
+    timesteps_per_batch: 60000
+    lam: 0.97
+    gamma: 0.99
+    max_kl: 0.01
+    entcoeff: 0.0
+    vf_iters : 80
+    vf_stepsize : 0.001
+    learning_rate: 0.0004
+    cg_damping : 0.1
+    cg_iters : 10 # 20
+    cost_lim : 25
+    penalty_init : 1.0
+    penalty_lr : 0.05
+#                     max_ep_len=1000,
+#    if robot=='Doggo':
+#        num_steps = 1e8
+#        steps_per_epoch = 60000
+#    else:
+#        num_steps = 1e7
+#        steps_per_epoch = 30000
+
+  # Copy and paste from TRPO
   InvertedPendulum-v2:
     timesteps_per_batch: 5000
     lam: 0.9

@@ -724,10 +724,10 @@ class ReinforcedGAT:
                     cg_damping=args['cg_damping'],
                     cg_iters=args['cg_iters']
                 )
-            elif algo == "TRPO-lagrangian":
+            elif algo == "TRPO_lagrangian":
                 print('Using TRPO-lagrangian as the Target Policy Algo')
 
-                args = args['TRPO-lagrangian'][self.env_name]
+                args = args['TRPO_lagrangian'][self.env_name]
 
                 self.target_policy = TRPO_lagrangian(
                     MLPWithSafeValue,
@@ -833,10 +833,10 @@ class ReinforcedGAT:
                     cg_damping=args['cg_damping'],
                     cg_iters=args['cg_iters']
                 )
-            elif algo == "TRPO-lagrangian":
-                print('Using TRPO-lagrangian as the Target Policy Algo')
+            elif algo == "TRPO_lagrangian":
+                print('Using TRPO_lagrangian as the Target Policy Algo')
 
-                args = args['TRPO-lagrangian'][self.env_name]
+                args = args['TRPO_lagrangian'][self.env_name]
 
                 self.target_policy = TRPO_lagrangian(
                     load_policy,

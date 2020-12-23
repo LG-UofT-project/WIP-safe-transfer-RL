@@ -1,5 +1,5 @@
 """Script good initial policy on some environement"""
-import gym
+import gym, safety_gym
 from stable_baselines.common.policies import MlpPolicy as mlp_standard
 from stable_baselines.common.policies import FeedForwardPolicy as ffp_standard
 from stable_baselines.sac.policies import MlpPolicy as mlp_sac
@@ -10,17 +10,19 @@ from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv, VecNorma
 from stable_baselines import SAC, TD3, TRPO, PPO2, ACKTR
 from stable_baselines.ddpg.noise import NormalActionNoise
 from rl_gat.gat import NoisyRealEnv
+from safe_rl_cmdp.trpo_lagrangian import TRPO_lagrangian
+from safe_rl_cmdp.utils import FeedForwardWithSafeValue, MLPWithSafeValue, CnnWithSafeValue
 from stable_baselines.common.callbacks import EvalCallback
 import numpy as np
 import yaml, shutil, os
 from scripts.utils import MujocoNormalized
 
-ALGO = TRPO
+ALGO = TRPO_lagrangian
 # set the environment here :
-ENV_NAME = 'HopperArmatureModified-v2'
+ENV_NAME = 'Safexp-PointGoal1-v0'
 # set this to the parent environment
-PARAMS_ENV = 'Hopper-v2'
-TIME_STEPS = 2000000
+PARAMS_ENV = 'Safexp-PointGoal1-v0'
+TIME_STEPS = 2000000 # 10000000, 2000000
 NOISE_VALUE = 0.0
 SAVE_BEST_FOR_20 = False
 NORMALIZE = False
@@ -87,29 +89,40 @@ def evaluate_policy_on_env(env,
                            model,
                            render=True,
                            iters=1,
-                           deterministic=True
+                           deterministic=True,
+                           constrained=False
                            ):
     # model.set_env(env)
     return_list = []
+    cost_list = []
     for i in range(iters):
         return_val = 0
+        cost_val = 0
         done = False
         obs = env.reset()
         while not done:
             action, _state = model.predict(obs, deterministic=deterministic)
             obs, rewards, done, info = env.step(action)
             return_val+=rewards
+            if constrained:
+              cost_val += info[0].get('cost', 0)
+            else:
+              cost_val += 0
             if render:
                 env.render()
                 # time.sleep(0.01)
 
         if not i%15: print('Iteration ', i, ' done.')
         return_list.append(return_val)
+        cost_list.append(cost_val)
     print('***** STATS FOR THIS RUN *****')
     print('MEAN : ', np.mean(return_list))
     print('STD : ', np.std(return_list))
+    print('COST_MEAN : ', np.mean(cost_list))
+    print('COST_STD : ', np.std(cost_list))
     print('******************************')
-    return np.mean(return_list), np.std(return_list)/np.sqrt(len(return_list))
+    return np.mean(return_list), np.std(return_list)/np.sqrt(len(return_list)), \
+           np.mean(cost_list), np.std(cost_list)/np.sqrt(len(cost_list))
 
 
 def train_initial_policy(
@@ -120,6 +133,7 @@ def train_initial_policy(
     """Uses the specified algorithm on the target environment"""
     print("Using algorithm : ", algo.__name__)
     print("Model saved as : ", "data/models/" +algo.__name__+"_initial_policy_"+env_name+"_.pkl")
+    constrained = False
 
     # define the environment here
     env = gym.make(env_name)
@@ -246,6 +260,26 @@ def train_initial_policy(
                      tensorboard_log='data/TBlogs/initial_policy_training',
                      )
 
+    elif algo.__name__ == "TRPO_lagrangian":
+        print('Initializing TRPO-lagrangian with safety-starter-agents hyperparameters .. ')
+
+        model = TRPO_lagrangian(MLPWithSafeValue, env,
+                    verbose=1,
+                    tensorboard_log='data/TBlogs/initial_policy_training',
+                    timesteps_per_batch=args['timesteps_per_batch'],
+                    lam=args['lam'],
+                    max_kl=args['max_kl'],
+                    gamma=args['gamma'],
+                    vf_iters=args['vf_iters'],
+                    vf_stepsize=args['vf_stepsize'],
+                    entcoeff=args['entcoeff'],
+                    cg_damping=args['cg_damping'],
+                    cg_iters=args['cg_iters'],
+                    cost_lim = args['cost_lim'],
+                    penalty_init = args['penalty_init'],
+                    penalty_lr = args['penalty_lr']
+                    )
+        constrained = True
     else:
         print('No algorithm matched. Using SAC .. ')
         model = SAC(CustomPolicy, env,
@@ -279,7 +313,7 @@ def train_initial_policy(
                     tb_log_name=model_name.split('/')[-1],
                     log_interval=10,)
         model.save(model_name)
-        evaluate_policy_on_env(env, model, render=False, iters=10)
+        evaluate_policy_on_env(env, model, render=False, iters=10, constrained=constrained)
 
     # save the environment params
     if NORMALIZE:
