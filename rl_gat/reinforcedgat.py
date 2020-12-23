@@ -121,6 +121,7 @@ class ATPEnv(gym.Wrapper):
                  env,
                  target_policy,
                  discriminator=None,
+                 discriminator_sa = None,
                  fwd_model=None,
                  disc_norm=None,
                  fwd_norm=(0, 1),
@@ -151,6 +152,7 @@ class ATPEnv(gym.Wrapper):
 
         self.device = device
         self.discriminator = discriminator
+        self.discriminator_sa = discriminator_sa
         self.fwd_model = fwd_model
         self.input_norm = disc_norm
         self.fwd_norm = fwd_norm
@@ -183,10 +185,12 @@ class ATPEnv(gym.Wrapper):
         self.prev_frames = None
         self.time_step_counter = 0
 
-    def refresh_disc(self, target_policy, discriminator, disc_norm):
+    def refresh_disc(self, target_policy, discriminator, discriminator_sa, disc_norm, disc_sa_norm):
         self.target_policy = target_policy
         self.discriminator = discriminator
+        self.discriminator_sa = discriminator_sa
         self.input_norm = disc_norm
+        self.input_sa_norm = disc_sa_norm
 
     def reset(self, **kwargs):
         """Reset function for the wrapped environment"""
@@ -250,22 +254,29 @@ class ATPEnv(gym.Wrapper):
 
             concat_sas = apply_norm(concat_sas, self.input_norm[0])
             concat_sas = torch.tensor(concat_sas).float().to(self.device)
+            
             disc_rew_logit = self.discriminator(concat_sas)
             disc_rew = torch.nn.Sigmoid()(disc_rew_logit) # pass through sigmoid
             disc_rew = disc_rew.detach().to(self.device).numpy()
+            
+            prev_frames = self.prev_frames
+            prev_frames = apply_norm(prev_frames, self.input_sa_norm[0])
+            prev_frames = torch.tensor(prev_frames).float().to(self.device)
+            
+            disc_sa_rew_logit = self.discriminator_sa(prev_frames)
+            disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
+            disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
 
             # log-ify the discriminator value
             # 1e-8 term was used by faraz in the GAIfO implementation
             if self.loss == 'GAIL':
-                disc_rew = -np.log(1.0 - disc_rew + 1e-8)[0]
-
+                disc_rew = -(np.log(disc_rew + 1e-8) + np.log(1 - disc_rew + 1e-8))[0]
+                disc_sa_rew = -(np.log(disc_sa_rew + 1e-8) + np.log(1 - disc_sa_rew + 1e-8))[0]
             # non saturating loss function
             elif self.loss == 'NSGAIL':
                 disc_rew = np.log(disc_rew + 1e-8)[0]
-
             # testing least squares GAN [Same result as ^^ - doesnt work :(]
             # disc_rew = -((disc_rew.detach().cpu().numpy()-1)[0]**2)
-
             # testing AIRL formulation
             elif self.loss == 'AIRL':
                 disc_rew = (np.log(disc_rew + 1e-8) - np.log(1 - disc_rew + 1e-8))[0]
@@ -283,6 +294,7 @@ class ATPEnv(gym.Wrapper):
             # disc_rew = disc_rew - np.linalg.norm(np.minimum(0, self.max_act-abs(transformed_action)))**2
         else:
             disc_rew = 0.0
+            disc_sa_rew = 0.0
 
         # # run forward model only if beta <1.0
         # if self.beta < 1.0:
@@ -315,7 +327,7 @@ class ATPEnv(gym.Wrapper):
             pickle.dump(self.Ts, open(self.expt_path+'/fake_data.p', "wb"))
 
         # TODO: we should figure out what to do with sim_reward
-        output_reward = disc_rew #+ self.lam*sim_reward + (1-self.beta)*fwd_rew #- 0.1*np.sum(transformed_action**2)
+        output_reward = disc_rew -disc_sa_rew #+ self.lam*sim_reward + (1-self.beta)*fwd_rew #- 0.1*np.sum(transformed_action**2)
         return concat_sa, output_reward, sim_done, info
 
     def get_fake_trajs(self):
@@ -903,15 +915,29 @@ class ReinforcedGAT:
             n_hidden=64,
             activations=nn.ReLU,
             action_space=self.sim_env.action_space.shape[0]).to(self.device)
-
+        
+        num_sa = self.sim_env.action_space.shape[0] * (self.frames)
+        num_sa += self.sim_env.observation_space.shape[0] * (self.frames)
+        
+        # Input to discriminator_sa is S_t, a_t
+        self.discriminator_sa = Discriminator(
+            n_feature = num_sa,
+            n_hidden = 64,
+            activations = nn.ReLU,
+            action_space = self.sim_env.action_space.shape[0]).to(self.device)
+        
         self.discriminator_norm_x = ((np.zeros(num_inputs),
                                         np.ones(num_inputs)), 0)
+        
+        self.discriminator_sa_norm_x = ((np.zeros(num_sa),np.ones(num_sa)),0)
 
         if atp_loss_function == 'WGAN':
             self.discriminator_loss = self.wgan_loss
+            self.discriminator_sa_loss = self.wgan_loss
         else:
             # self.discriminator_loss = torch.nn.BCELoss()
             self.discriminator_loss = self.bce_with_entropy_loss
+            self.discriminator_sa_loss = self.bce_with_entropy_loss
             # self.discriminator_loss = torch.nn.BCEWithLogitsLoss()
             # self.discriminator_loss = torch.nn.MSELoss() # if using lsgan
 
@@ -919,6 +945,8 @@ class ReinforcedGAT:
         #     self.discriminator.parameters(), lr=disc_lr, weight_decay=1e-2)
         self.optimizer = torch.optim.AdamW(
             self.discriminator.parameters(), lr=disc_lr, weight_decay=1e-3)
+        
+        self.optimizer_sa = torch.optim.AdamW(self.discriminator_sa.parameters(), lr = disc_lr, weight_decay = 1e-3)
         # self.optimizer = torch.optim.RMSprop(
         #     self.discriminator.parameters(), lr=disc_lr)
         # self.optimizer = torch.optim.SGD(
@@ -946,6 +974,7 @@ class ReinforcedGAT:
         self.atp_environment = ATPEnv(env=env,
                                       target_policy=self.target_policy,
                                       discriminator=self.discriminator,
+                                      discriminator_sa = self.discriminator_sa,
                                       fwd_model=None,
                                       beta=1.0,
                                       device=self.device,
@@ -1178,7 +1207,9 @@ class ReinforcedGAT:
         self.atp_environment.env_method("refresh_disc",
                                         target_policy=self.target_policy,
                                         discriminator=self.discriminator,
+                                        discriminator_sa = self.discriminator_sa,
                                         disc_norm=self.discriminator_norm_x,
+                                        disc_sa_norm = self.discriminator_sa_norm_x
                                         )
 
         self.atp_environment.reset()
@@ -1296,6 +1327,14 @@ class ReinforcedGAT:
         X_list = []  # previous states + action + next state
         Y_list = []  # label for the trajectory : real:[1] / fake:[0]
 
+        # Lists for training the s,a discriminator 
+        X_sa_list = []
+        Y_sa_list = []
+        
+        # Add all terms except last (corresponding to s') for each term in list
+        X_sa_list.extend([x[:-1] for x in self.real_X_list])
+        Y_sa_list.extend(self.real_Y_list)
+        
         ######### COLLECT REAL TRAJECTORIES ###################
         # load the collected real trajectories
         X_list.extend(self.real_X_list)
@@ -1307,7 +1346,8 @@ class ReinforcedGAT:
             X_list_indices = random.sample(np.arange(len(X_list)).tolist(), k=self.single_batch_size)
             X_list = [X_list[i] for i in X_list_indices]
             Y_list = [Y_list[i] for i in X_list_indices]
-
+            X_sa_list = [X_sa_list[i] for i in X_list_indices]
+            Y_sa_list = [Y_sa_list[i] for i in X_list_indices]
 
         print('Real data trajectories count : ', len(Y_list))
 
@@ -1363,6 +1403,8 @@ class ReinforcedGAT:
         # unpack trajectories and create the dataset to train discriminator
 
         X_list_fake, Y_list_fake = [], []
+        X_sa_list_fake = [] 
+
 
         for T in fake_Ts: # For each trajectory:
             for i in range(len(T) - self.frames):
@@ -1375,24 +1417,32 @@ class ReinforcedGAT:
 
                 # Append action a_t
                 # X = np.append(X, T[i + self.frames - 1][1])
-
+                
+                X_sa_list_fake.append(X)
+                
                 # Append next state S_{t+1}
                 X = np.append(X, T[i + self.frames][0])
                 X_list_fake.append(X)
 
                 # Append label = fake
                 Y_list_fake.append(np.array([0.0]))
-
+        
         if single_batch_test:
             assert len(X_list) >= self.single_batch_size, "Using too less data"
             X_list_indices = random.sample(np.arange(len(X_list_fake)).tolist(), k=self.single_batch_size)
             X_list_fake = [X_list_fake[i] for i in X_list_indices]
             Y_list_fake = [Y_list_fake[i] for i in X_list_indices]
+            X_sa_list_fake = [X_sa_list_fake[i] for i in X_list_indices]
+            Y_sa_list_fake = [Y_list_fake[i] for i in X_list_indices]
             X_list.extend(X_list_fake)
             Y_list.extend(Y_list_fake)
+            X_sa_list.extend(X_sa_list_fake)
+            Y_sa_list.extend(Y_sa_list_fake)
         else:
             X_list.extend(X_list_fake)
             Y_list.extend(Y_list_fake)
+            X_sa_list.extend(X_sa_list_fake)
+            Y_sa_list.extend(Y_sa_list_fake)
 
         # # testing adding noise to the discriminator
         # if iter_step == 0:
@@ -1430,7 +1480,31 @@ class ReinforcedGAT:
         # set discriminator to eval mode after training
         self.discriminator = self.discriminator.eval()
         self.discriminator = self.discriminator.to(self.device)
-
+        
+        self.discriminator_sa_norm_x, _ = train_model_es(
+            model=self.discriminator_sa,
+            x_list=X_sa_list,
+            y_list=Y_sa_list,
+            optimizer=self.optimizer_sa,
+            criterion=self.discriminator_sa_loss,
+            problem='classification',
+            max_epochs=num_epochs if not single_batch_test else 1,
+            checkpoint_name=self.expt_label,
+            num_cores=self.num_cores,
+            label=str(grounding_step)+'_'+str(iter_step)+'_sa',
+            device=self.device,
+            normalize_data=True,
+            use_es=False,
+            dump_loss_to_file=debug_discriminator,
+            expt_path=self.expt_path,
+            compute_grad_penalty=compute_grad_penalty,
+            batch_size=int(len(Y_list)/nminibatches) if not single_batch_test else self.single_batch_size,
+        )
+      
+        # set discriminator s,a to eval mode after training
+        self.discriminator_sa = self.discriminator_sa.eval()
+        self.discriminator_sa = self.discriminator_sa.to(self.device)
+        
     def save_target_policy(self, iter_num=None):
         """Saves target policy"""
         # April 19, 2020 : Currently not using this method to save the target policy
