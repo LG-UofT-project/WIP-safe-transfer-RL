@@ -5,4 +5,5 @@ from rl_gat.envs.modified_envs import InvertedPendulumModifiedEnv
 from rl_gat.envs.modified_envs import Walker2dModifiedEnv
 from pybullet_envs.bullet.minitaur_gym_env import MinitaurBulletEnv
 from rl_gat.envs.modified_envs import AntBulletModifiedEnv
+from rl_gat.envs import modified_safety_suite
 
