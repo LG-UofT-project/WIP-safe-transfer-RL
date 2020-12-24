@@ -2,15 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0837f052-342d-48ab-8674-d5c4cc45aa25" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/GARAT.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/GARAT.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/models/garat/wed_nightGAIL_sim2real_TRPO_1000000_5000_20_1/commandline_args.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rl_gat/reinforcedgat.py" beforeDir="false" afterPath="$PROJECT_DIR$/rl_gat/reinforcedgat.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/safe_rl_cmdp/runners_cmdp.py" beforeDir="false" afterPath="$PROJECT_DIR$/safe_rl_cmdp/runners_cmdp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/safe_rl_cmdp/trpo_lagrangian.py" beforeDir="false" afterPath="$PROJECT_DIR$/safe_rl_cmdp/trpo_lagrangian.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/safe_rl_cmdp/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/safe_rl_cmdp/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/train_initial_policy.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/train_initial_policy.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +34,7 @@
       </console-settings>
     </option>
   </component>
-  <component name="RunManager" selected="Python.test">
+  <component name="RunManager" selected="Python.train_initial_policy">
     <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="GARAT" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -63,31 +57,50 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="train_initial_policy" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="GARAT" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="LD_LIBRARY_PATH" value="$LD_LIBRARY_PATH:$USER_HOME$/.mujoco/mujoco200/bin" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/train_initial_policy.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="run_experiments.sh" type="ShConfigurationType" temporary="true">
-      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
       <option name="SCRIPT_PATH" value="$PROJECT_DIR$/scripts/run_experiments.sh" />
       <option name="SCRIPT_OPTIONS" value="" />
-      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
       <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$/scripts" />
-      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
       <option name="INTERPRETER_PATH" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="EXECUTE_IN_TERMINAL" value="true" />
-      <envs />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Python.test" />
+      <item itemvalue="Python.train_initial_policy" />
       <item itemvalue="Shell Script.run_experiments.sh" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.train_initial_policy" />
         <item itemvalue="Python.test" />
         <item itemvalue="Shell Script.run_experiments.sh" />
       </list>
     </recent_temporary>
   </component>
-  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SpellCheckerSettings" BundledDictionaries="0" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" Dictionaries="0" CorrectionsLimit="5" DefaultDictionary="application-level" UseSingleDictionary="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -106,20 +119,21 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>
     </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/safe_rl_cmdp/trpo_lagrangian.py</url>
-          <line>151</line>
-          <option name="timeStamp" value="5" />
+          <line>407</line>
+          <option name="timeStamp" value="8" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -114,7 +114,7 @@ class FeedForwardWithSafeValue(ActorCriticPolicy):
 
         if net_arch is None:
             if layers is None:
-                layers = [64, 64]
+                layers = [256, 256] # [64,64]
             net_arch = [dict(vf=layers, pi=layers, vcf=layers)]
 
         with tf.variable_scope("model", reuse=reuse):
@@ -249,4 +249,43 @@ def add_vctarg_and_cadv(seg,cost_gamma,cost_lam):
         cdelta = costs[step] + cost_gamma * vcpred[step + 1] * nonterminal - vcpred[step]
         seg["cadv"][step] = lastgaelam = cdelta + cost_gamma * cost_lam * nonterminal * lastgaelam
     seg["tdlamcost"] = seg["cadv"] + seg["vcpred"]
-         
+
+def total_episode_reward_cost_logger(rew_acc, rewards, cost_acc, costs, masks, writer, steps):
+    """
+    calculates the cumulated episode reward, and prints to tensorflow log the output
+
+    :param rew_acc: (np.array float) the total running reward
+    :param rewards: (np.array float) the rewards
+    :param masks: (np.array bool) the end of episodes
+    :param writer: (TensorFlow Session.writer) the writer to log to
+    :param steps: (int) the current timestep
+    :return: (np.array float) the updated total running reward
+    :return: (np.array float) the updated total running reward
+    """
+    with tf.variable_scope("environment_info", reuse=True):
+        for env_idx in range(rewards.shape[0]):
+            dones_idx = np.sort(np.argwhere(masks[env_idx]))
+
+            if len(dones_idx) == 0:
+                rew_acc[env_idx] += sum(rewards[env_idx])
+                cost_acc[env_idx] += sum(costs[env_idx])
+            else:
+                rew_acc[env_idx] += sum(rewards[env_idx, :dones_idx[0, 0]])
+                cost_acc[env_idx] += sum(costs[env_idx, :dones_idx[0, 0]])
+                summary = tf.Summary(value=[tf.Summary.Value(tag="episode_reward", simple_value=rew_acc[env_idx])])
+                writer.add_summary(summary, steps + dones_idx[0, 0])
+                summary = tf.Summary(value=[tf.Summary.Value(tag="episode_cost", simple_value=cost_acc[env_idx])])
+                writer.add_summary(summary, steps + dones_idx[0, 0])
+                for k in range(1, len(dones_idx[:, 0])):
+                    rew_acc[env_idx] = sum(rewards[env_idx, dones_idx[k - 1, 0]:dones_idx[k, 0]])
+                    cost_acc[env_idx] = sum(costs[env_idx, dones_idx[k - 1, 0]:dones_idx[k, 0]])
+                    summary = tf.Summary(value=[tf.Summary.Value(tag="episode_reward", simple_value=rew_acc[env_idx])])
+                    writer.add_summary(summary, steps + dones_idx[k, 0])
+                    summary = tf.Summary(value=[tf.Summary.Value(tag="episode_cost", simple_value=cost_acc[env_idx])])
+                    writer.add_summary(summary, steps + dones_idx[k, 0])
+                rew_acc[env_idx] = sum(rewards[env_idx, dones_idx[-1, 0]:])
+                cost_acc[env_idx] = sum(costs[env_idx, dones_idx[-1, 0]:])
+
+    return rew_acc, cost_acc
+
+

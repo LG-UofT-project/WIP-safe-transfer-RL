@@ -91,11 +91,13 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
     observation = env.reset()
 
     cur_ep_ret = 0  # return in current episode
+    cur_ep_cost = 0
     current_it_len = 0  # len of current iteration
     current_ep_len = 0 # len of current episode
     cur_ep_true_ret = 0
-    cur_ep_cost = 0
+    cur_ep_true_cost = 0
     ep_true_rets = []
+    ep_true_costs = []
     ep_rets = []  # returns of completed episodes in this segment
     ep_costs = [] # Cost of completed episodes in this segment
     ep_lens = []  # Episode lengths
@@ -104,6 +106,7 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
     observations = np.array([observation for _ in range(horizon)])
     true_rewards = np.zeros(horizon, 'float32')
     rewards = np.zeros(horizon, 'float32')
+    true_costs = np.zeros(horizon, 'float32')
     costs = np.zeros(horizon, 'float32')
     vpreds = np.zeros(horizon, 'float32')
     vcpreds = np.zeros(horizon, 'float32')
@@ -129,6 +132,7 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
                     "dones": dones,
                     "episode_starts": episode_starts,
                     "true_rewards": true_rewards,
+                    "true_costs": true_costs,
                     "vpred": vpreds,
                     "vcpred": vcpreds,
                     "costs": costs,
@@ -139,6 +143,7 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
                     "ep_costs": ep_costs,
                     "ep_lens": ep_lens,
                     "ep_true_rets": ep_true_rets,
+                    "ep_true_costs": ep_true_costs,
                     "total_timestep": current_it_len,
                     'continue_training': True
             }
@@ -149,6 +154,7 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
             ep_rets = []
             ep_costs = []
             ep_true_rets = []
+            ep_true_costs = []
             ep_lens = []
             # Reset current iteration length
             current_it_len = 0
@@ -172,9 +178,11 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
             observation, reward, done, info = env.step(clipped_action[0])
             true_reward = reward
             if constrained:
-              cost = info.get('cost', 0)
+                cost = info.get('cost', 0)
+                true_cost = cost
             else:
-              cost = 0
+                cost = 0
+                true_cost = cost
 
         if callback is not None:
             if callback.on_step() is False:
@@ -186,6 +194,7 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
                     "costs": costs,
                     "episode_starts": episode_starts,
                     "true_rewards": true_rewards,
+                    "true_costs": true_costs,
                     "vpred": vpreds,
                     "vcpred": vcpreds,
                     "actions": actions,
@@ -195,6 +204,7 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
                     "ep_costs": ep_costs,
                     "ep_lens": ep_lens,
                     "ep_true_rets": ep_true_rets,
+                    "ep_true_costs": ep_true_costs,
                     "total_timestep": current_it_len,
                     'continue_training': False
                     }
@@ -203,12 +213,14 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
         rewards[i] = reward
         true_rewards[i] = true_reward
         costs[i] = cost
+        true_costs[i] = true_cost
         dones[i] = done
         episode_start = done
 
         cur_ep_ret += reward
         cur_ep_true_ret += true_reward
         cur_ep_cost += cost
+        cur_ep_true_cost += true_cost
         current_it_len += 1
         current_ep_len += 1
         if done:
@@ -222,10 +234,12 @@ def traj_segment_generator(policy, env, horizon, reward_giver=None, gail=False, 
             ep_rets.append(cur_ep_ret)
             ep_costs.append(cur_ep_cost)
             ep_true_rets.append(cur_ep_true_ret)
+            ep_true_costs.append(cur_ep_true_cost)
             ep_lens.append(current_ep_len)
             cur_ep_ret = 0
             cur_ep_true_ret = 0
             cur_ep_cost = 0
+            cur_ep_true_cost = 0
             current_ep_len = 0
             if not isinstance(env, VecEnv):
                 observation = env.reset()

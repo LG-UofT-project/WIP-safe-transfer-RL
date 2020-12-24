@@ -17,7 +17,7 @@ from stable_baselines.common.cg import conjugate_gradient
 from stable_baselines.common.policies import ActorCriticPolicy
 from stable_baselines.common.misc_util import flatten_lists
 from safe_rl_cmdp.runners_cmdp import traj_segment_generator
-from safe_rl_cmdp.utils import add_vtarg_and_adv, add_vctarg_and_cadv
+from safe_rl_cmdp.utils import add_vtarg_and_adv, add_vctarg_and_cadv, total_episode_reward_cost_logger
 
 class TRPO_lagrangian(ActorCriticRLModel):
     """
@@ -77,8 +77,9 @@ class TRPO_lagrangian(ActorCriticRLModel):
         
         # Lagrangian Params
         self.cost_lim = cost_lim
-        self.penalty_init = penalty_init,
+        self.penalty_init = penalty_init
         self.penalty_lr = penalty_lr
+        self.episode_cost = None
         
         self.graph = None
         self.sess = None
@@ -195,17 +196,6 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     optimgain /= (1 + penalty)
                     # # Loss function for pi is negative of pi_objective
                     # optimgain = -optimgain # Should we??
-
-                    # # Penalty term in constrained objective
-                    # with tf.variable_scope('penalty'):
-                    #     param_init = np.log(max(np.exp(penalty_init)-1, 1e-8))
-                    #     penalty_param = tf.get_variable('penalty_param',
-                    #                       initializer=float(param_init),
-                    #                       trainable=True,
-                    #                       dtype=tf.float32)
-                    #     penalty = tf.nn.softplus(penalty_param)
-                    #
-                    # penalty_loss = -penalty_param * (cret - self.cost_lim)
                     
                     losses = [optimgain, meankl, entbonus, surrgain, meanent, surrcost]
                     self.loss_names = ["optimgain", "meankl", "entloss", "surrgain", "entropy", "surrcost"]
@@ -217,8 +207,6 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     vf_var_list = [v for v in all_var_list if "/pi" not in v.name and "/logstd" not in v.name and "/vcf" not in v.name] # value parameters
                     vcf_var_list = [v for v in all_var_list if "/pi" not in v.name and "/logstd" not in v.name and "/vf" not in v.name] # cost value parameters
 
-                    #vc_var_list = [v for v in tf_util.get_trainable_vars("vc") if "vc" in v.name]
-                    
                     self.get_flat = tf_util.GetFlat(var_list, sess=self.sess)
                     self.set_from_flat = tf_util.SetFromFlat(var_list, sess=self.sess)
 
@@ -342,6 +330,8 @@ class TRPO_lagrangian(ActorCriticRLModel):
         with SetVerbosity(self.verbose), TensorboardWriter(self.graph, self.tensorboard_log, tb_log_name, new_tb_log) \
                 as writer:
             self._setup_learn()
+            if self.episode_cost is None:
+                self.episode_cost = np.zeros((self.n_envs,))
 
             with self.sess.as_default():
                 callback.on_training_start(locals(), globals())
@@ -415,9 +405,11 @@ class TRPO_lagrangian(ActorCriticRLModel):
 
                         # true_rew is the reward without discount
                         if writer is not None:
-                            total_episode_reward_logger(self.episode_reward,
+                            total_episode_reward_cost_logger(self.episode_reward,
                                                         seg["true_rewards"].reshape(
                                                             (self.n_envs, -1)),
+                                                        self.episode_cost,
+                                                        seg["true_costs"].reshape((self.n_envs, -1)),
                                                         seg["dones"].reshape((self.n_envs, -1)),
                                                         writer, self.num_timesteps)
 

@@ -1,6 +1,7 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from rl_gat.reinforcedgat import ReinforcedGAT
+from safe_rl_cmdp.trpo_lagrangian import TRPO_lagrangian
 import gym, os, glob, shutil, safety_gym
 import numpy as np
 from stable_baselines.common.policies import MlpPolicy
@@ -50,28 +51,38 @@ def evaluate_policy_on_env(env,
                            render=True,
                            iters=1,
                            deterministic=True,
+                           constrained=False
                            ):
     # model.set_env(env)
     return_list = []
+    cost_list = []
     for i in range(iters):
         return_val = 0
+        cost_val = 0
         done = False
         obs = env.reset()
         while not done:
             action, _state = model.predict(obs, deterministic=deterministic)
             obs, rewards, done, info = env.step(action)
             return_val+=rewards
+            if constrained:
+              cost_val += info.get('cost', 0)
+            else:
+              cost_val += 0
             if render:
                 env.render()
                 # time.sleep(0.01)
 
         if not i%15: print('Iteration ', i, ' done.')
         return_list.append(return_val)
+        cost_list.append(cost_val)
     print('***** STATS FOR THIS RUN *****')
     print('MEAN : ', np.mean(return_list))
     print('STD : ', np.std(return_list))
-    print('******************************')
-    return np.mean(return_list), np.std(return_list)/np.sqrt(len(return_list))
+    print('COST_MEAN : ', np.mean(cost_list))
+    print('COST_STD : ', np.std(cost_list))
+    return np.mean(return_list), np.std(return_list)/np.sqrt(len(return_list)), \
+           np.mean(cost_list), np.std(cost_list)/np.sqrt(len(cost_list))
 
 def main():
     # SIM_ENV_NAME = 'InvertedPendulum-v2'
@@ -79,42 +90,38 @@ def main():
 
     # expt_label = input('Enter a label for the experiment : ')
 
+    # Set default parameters to follow run_experiments.sh
     parser = argparse.ArgumentParser(description='Reinforced Grounded Action Transformation')
-    parser.add_argument('--target_policy_algo', default="TRPO-lagrangian", type=str, help="name in str of the agent policy training algorithm")
+    parser.add_argument('--target_policy_algo', default="TRPO_lagrangian", type=str, help="name in str of the agent policy training algorithm")
     parser.add_argument('--action_tf_policy_algo', default="PPO2", type=str, help="name in str of the Action Transformer policy training algorithm")
     parser.add_argument('--load_policy_path', default=None, help="relative path of initial policy trained in sim")
-    # parser.add_argument('--load_policy_path', default='data/models/TRPO_initial_policy_steps_Hopper-v2_1000000_.pkl', help="relative path of initial policy trained in sim")
     parser.add_argument('--alpha', default=1.0, type=float, help="Deprecated feature. Ignore")
     parser.add_argument('--beta', default=1.0, type=float, help="Deprecated feature. Ignore")
-    parser.add_argument('--n_trainsteps_target_policy', default=1000000, type=int, help="Number of time steps to train the agent policy in the grounded environment")
+    parser.add_argument('--n_trainsteps_target_policy', default=100000, type=int, help="Number of time steps to train the agent policy in the grounded environment")
+    # 1e8 for doggo, 1e7 for else
     parser.add_argument('--n_trainsteps_action_tf_policy', default=1000000, type=int, help="Timesteps to train the Action Transformer policy in the ATPEnvironment")
-    parser.add_argument('--num_cores', default=10, type=int, help="Number of threads to use while collecting real world experience")
+    parser.add_argument('--num_cores', default=1, type=int, help="Number of threads to use while collecting real world experience") # was 10
     parser.add_argument('--sim_env', default='Safexp-PointGoal1-v0', help="Name of the simulator environment (Unmodified)")
     parser.add_argument('--real_env', default='Safexp-PointGoal2-v0', help="Name of the Real World environment (Modified)")
-    # parser.add_argument('--sim_env', default='InvertedPendulum-v2', help="Name of the simulator environment (Unmodified)")
-    # parser.add_argument('--real_env', default='InvertedPendulumModified-v2', help="Name of the Real World environment (Modified)")
     parser.add_argument('--n_frames', default=1, type=int, help="Number of previous frames observed by discriminator")
     parser.add_argument('--expt_number', default=1, type=int, help="Expt. number to keep track of multiple experiments")
     parser.add_argument('--n_grounding_steps', default=1, type=int, help="Number of grounding steps. (Outerloop of algorithm ) ")
-    parser.add_argument('--n_iters_atp', default=1, type=int, help="Number of GAN iterations")
+    parser.add_argument('--n_iters_atp', default=50, type=int, help="Number of GAN iterations")
     parser.add_argument('--discriminator_epochs', default=1, type=int, help="Discriminator epochs per GAN iteration")
     parser.add_argument('--generator_epochs', default=1, type=int, help="ATP epochs per GAN iteration")
-    # parser.add_argument('--n_iters_atp', default=20, type=int, help="Number of GAN iterations")
-    # parser.add_argument('--discriminator_epochs', default=5, type=int, help="Discriminator epochs per GAN iteration")
-    # parser.add_argument('--generator_epochs', default=50, type=int, help="ATP epochs per GAN iteration")
-    parser.add_argument('--real_trajs', default=100, type=int, help="Set max amount of real TRAJECTORIES used")
-    parser.add_argument('--sim_trajs', default=100, type=int, help="Set max amount of sim TRAJECTORIES used")
-    parser.add_argument('--real_trans', default=5000, type=int, help="amount of real world transitions used")
-    parser.add_argument('--gsim_trans', default=5000, type=int, help="amount of simulator transitions used")
+    parser.add_argument('--real_trajs', default=1000, type=int, help="Set max amount of real TRAJECTORIES used")
+    parser.add_argument('--sim_trajs', default=1000, type=int, help="Set max amount of sim TRAJECTORIES used")
+    parser.add_argument('--real_trans', default=1024, type=int, help="amount of real world transitions used")
+    parser.add_argument('--gsim_trans', default=1024, type=int, help="amount of simulator transitions used")
     parser.add_argument('--debug', action='store_true', help="DEPRECATED")
-    parser.add_argument('--eval', action='store_true', help="set to true to evaluate the agent policy in the real environment, after training in grounded environment")
+    parser.add_argument('--eval', action='store_false', help="set to true to evaluate the agent policy in the real environment, after training in grounded environment")
     parser.add_argument('--use_cuda', action='store_true', help="DEPRECATED. Not using CUDA")
     parser.add_argument('--instance_noise', action='store_true', help="DEPRECATED. Not using instance noise")
-    parser.add_argument('--ent_coeff', default=0.00005, type=float, help="entropy coefficient for the PPO algorithm, used to train the action transformer policy")
-    parser.add_argument('--max_kl', default=0.000005, type=float, help="Set this only if using TRPO for the action transformer policy")
+    parser.add_argument('--ent_coeff', default=0.01, type=float, help="entropy coefficient for the PPO algorithm, used to train the action transformer policy")
+    parser.add_argument('--max_kl', default=3e-4, type=float, help="Set this only if using TRPO for the action transformer policy")
     parser.add_argument('--clip_range', default=0.1, type=float, help="PPO objective clipping factor -> Action transformer policy")
     parser.add_argument('--use_condor', action='store_true', help="UNUSABLE")
-    parser.add_argument('--plot', action='store_true', help="visualize the action transformer policy - works well only for simple environments")
+    parser.add_argument('--plot', action='store_false', help="visualize the action transformer policy - works well only for simple environments")
     parser.add_argument('--tensorboard', action='store_true', help="visualize training in tensorboard")
     parser.add_argument('--save_atp', action='store_true', help="Saves the action transformer policy")
     parser.add_argument('--save_target_policy', action='store_true', help="saves the agent policy")
@@ -126,15 +133,15 @@ def main():
     parser.add_argument('--dont_reset', action='store_true', help="UNUSED")
     parser.add_argument('--reset_target_policy', action='store_true', help="UNUSED")
     parser.add_argument('--randomize_target_policy', action='store_true', help="UNUSED")
-    parser.add_argument('--compute_grad_penalty', action='store_true', help="set this to true to compute the GP term while training the discriminator")
-    parser.add_argument('--single_batch_test', action='store_true', help="performs a single update of the generator and discriminator.")
+    parser.add_argument('--compute_grad_penalty', action='store_false', help="set this to true to compute the GP term while training the discriminator")
+    parser.add_argument('--single_batch_test', action='store_false', help="performs a single update of the generator and discriminator.")
     parser.add_argument('--folder_namespace', default="None", type=str, help="UNUSED")
     parser.add_argument('--disc_lr', default=3e-3, type=float, help="learning rate for the AdamW optimizer to update the discriminator")
     parser.add_argument('--atp_lr', default=3e-4, type=float, help="learning rate for the Adam optimizer to update the agent policy")
-    parser.add_argument('--nminibatches', default=4, type=int, help="Number of minibatches used by the PPO algorithm to update the action transformer policy")
-    parser.add_argument('--noptepochs', default=4, type=int, help="Number of optimization epochs performed per minibatch by the PPO algorithm to update the action transformer policy")
+    parser.add_argument('--nminibatches', default=2, type=int, help="Number of minibatches used by the PPO algorithm to update the action transformer policy")
+    parser.add_argument('--noptepochs', default=1, type=int, help="Number of optimization epochs performed per minibatch by the PPO algorithm to update the action transformer policy")
     parser.add_argument('--deterministic', default=0, type=int, help="set to 0 to use the deterministic action transformer policy in the grounded environment")
-    parser.add_argument('--single_batch_size', default=0, type=int, help="batch size for the GARAT update")
+    parser.add_argument('--single_batch_size', default=512, type=int, help="batch size for the GARAT update")
 
 
     args = parser.parse_args()
@@ -152,6 +159,10 @@ def main():
     if args.dont_reset is True and args.reset_disc_only is True:
         raise ValueError('Cannot have both args dont_reset and reset_disc_only. Choose one.')
 
+    if args.target_policy_algo == 'TRPO_lagrangian':
+        constrained = True
+    else:
+        constrained = False
 
 
     expt_type = 'sim2sim' if args.sim_env == args.real_env else 'sim2real'
@@ -307,7 +318,7 @@ def main():
                                        gatworld.target_policy,
                                        render=False,
                                        iters=20,
-                                       deterministic=True)
+                                       deterministic=True, constrained=constrained)
 
                 with open(expt_path+"/output.txt", "a") as txt_file:
                     print(val, file=txt_file)
@@ -316,7 +327,8 @@ def main():
                                              gatworld.target_policy,
                                              render=False,
                                              iters=20,
-                                             deterministic=False)
+                                             deterministic=False,
+                                             constrained=constrained)
 
                 with open(expt_path + "/stochastic_output.txt", "a") as txt_file:
                     print(val, file=txt_file)
@@ -358,12 +370,15 @@ def main():
             algo = PPO2
         elif args.target_policy_algo == 'TRPO':
             algo = TRPO
+        elif args.target_policy_algo == 'TRPO-lagrangian':
+            algo = TRPO_lagrangian
 
         val = evaluate_policy_on_env(test_env,
                                      algo.load(sim_policy),
                                      render=False,
                                      iters=10,
-                                     deterministic=True)
+                                     deterministic=True,
+                                     constrained=constrained)
         with open(expt_path + "/green_red.txt", "a") as txt_file:
             print(val, file=txt_file)
 
@@ -373,12 +388,15 @@ def main():
             algo = PPO2
         elif args.target_policy_algo == 'TRPO':
             algo = TRPO
+        elif args.target_policy_algo == 'TRPO-lagrangian':
+            algo = TRPO_lagrangian
 
         val = evaluate_policy_on_env(test_env,
                                      algo.load(real_policy),
                                      render=False,
                                      iters=10,
-                                     deterministic=True)
+                                     deterministic=True,
+                                     constrained=constrained)
         with open(expt_path + "/green_red.txt", "a") as txt_file:
             print(val, file=txt_file)
 

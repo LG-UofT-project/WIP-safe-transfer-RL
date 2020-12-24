@@ -5,8 +5,11 @@ export CUDA_VISIBLE_DEVICES=0
 
 pwd
 
-sim_env="InvertedPendulum-v2"
-real_env="InvertedPendulumModified-v2"
+sim_env="Safexp-PointGoal1-v0"
+real_env="Safexp-PointGoal2-v0"
+
+#sim_env="InvertedPendulum-v2"
+#real_env="InvertedPendulumModified-v2"
 #sim_env="Hopper-v2"
 #real_env="HopperModified-v2"
 
@@ -20,7 +23,7 @@ do
   python3.6 test.py \
   --target_policy_algo "TRPO" \
   --action_tf_policy_algo "PPO2" \
-  --load_policy_path "data/models/TRPO_initial_policy_steps_"$sim_env"_1000000_.pkl" \
+  --load_policy_path "None" \
   --alpha 1.0 \
   --n_trainsteps_target_policy 100000 \
   --num_cores 1 \
@@ -57,3 +60,4 @@ do
 done
 
 #--compute_grad_penalty \
+#    --load_policy_path "data/models/TRPO_initial_policy_steps_"$sim_env"_1000000_.pkl" \
