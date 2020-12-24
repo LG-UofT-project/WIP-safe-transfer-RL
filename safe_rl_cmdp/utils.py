@@ -114,7 +114,7 @@ class FeedForwardWithSafeValue(ActorCriticPolicy):
 
         if net_arch is None:
             if layers is None:
-                layers = [64, 64]
+                layers = [256, 256] # [64,64]
             net_arch = [dict(vf=layers, pi=layers, vcf=layers)]
 
         with tf.variable_scope("model", reuse=reuse):
