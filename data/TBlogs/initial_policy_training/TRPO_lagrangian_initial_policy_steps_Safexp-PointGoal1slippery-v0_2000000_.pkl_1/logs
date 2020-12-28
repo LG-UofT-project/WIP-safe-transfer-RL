@@ -1,0 +1,2859 @@
+/home/hyunrok/anaconda3/envs/DRL/bin/python /home/hyunrok/Documents/WIP-safe-transfer-RL/scripts/train_initial_policy.py
+/home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:526: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:527: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:528: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:529: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:530: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:535: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+Using algorithm :  TRPO_lagrangian
+Model saved as :  data/models/TRPO_lagrangian_initial_policy_Safexp-PointGoal1slippery-v0_.pkl
+/home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/gym/logger.py:30: UserWarning: ~~ ENV Obs RANGE :  [-inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf
+ -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf -inf
+ -inf -inf -inf -inf] [inf inf inf inf inf inf inf inf inf inf inf inf inf inf inf inf inf inf
+ inf inf inf inf inf inf inf inf inf inf inf inf inf inf]
+~~~ ENV Action RANGE :  [-1. -1.] [1. 1.]
+Using Dummy Vec Env
+~~ Loaded args file ~~
+Initializing TRPO-lagrangian with safety-starter-agents hyperparameters .. 
+WARN: Box bound precision lowered by casting to float32
+  warnings.warn(colorize('%s: %s'%('WARN', msg % args), 'yellow'))
+WARNING:tensorflow:From /home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/tensorflow/python/framework/op_def_library.py:263: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+WARNING:tensorflow:From /home/hyunrok/Documents/WIP-safe-transfer-RL/safe_rl_cmdp/utils.py:124: flatten (from tensorflow.python.layers.core) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use keras.layers.flatten instead.
+WARNING:tensorflow:From /home/hyunrok/anaconda3/envs/DRL/lib/python3.7/site-packages/tensorflow/python/ops/math_ops.py:3066: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.cast instead.
+********** Iteration 0 ************
+Optimizing Policy...
+sampling
+done in 57.749 seconds
+learnpenalty
+done in 0.038 seconds
+computegrad
+done in 0.235 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0   0.000628          0
+         1   0.000266    0.00235
+         2   0.000214    0.00713
+         3   4.98e-05     0.0128
+         4   3.85e-05     0.0215
+         5   7.27e-06       0.03
+         6   1.37e-05     0.0303
+         7   6.36e-06     0.0339
+         8   2.87e-06     0.0363
+         9   5.71e-07     0.0365
+        10   2.58e-07     0.0366
+done in 0.467 seconds
+Expected: 0.003 Actual: 0.003
+Stepsize OK!
+vf and vcf
+done in 44.744 seconds
+-------------------------------------------
+| EpCostMean              | 43.4          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.0802       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 30            |
+| TimeElapsed             | 104           |
+| TimestepsSoFar          | 30000         |
+| entloss                 | 0.0           |
+| entropy                 | 2.8233185     |
+| explained_variance_t... | -0.00156      |
+| meankl                  | 0.006099517   |
+| optimgain               | 0.002552557   |
+| surrcost                | -0.0031915975 |
+| surrgain                | 0.0018931339  |
+-------------------------------------------
+********** Iteration 1 ************
+Optimizing Policy...
+sampling
+done in 52.214 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.110 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00277          0
+         1   0.000325    0.00335
+         2   0.000201    0.00645
+         3   0.000198      0.013
+         4   0.000186      0.015
+         5   7.96e-05     0.0413
+         6   3.03e-05     0.0504
+         7   2.49e-05     0.0518
+         8   1.48e-05      0.055
+         9   4.42e-05     0.0576
+        10   1.27e-06     0.0582
+done in 0.359 seconds
+Expected: 0.004 Actual: 0.003
+Stepsize OK!
+vf and vcf
+done in 54.711 seconds
+-------------------------------------------
+| EpCostMean              | 33.3          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.0941       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 60            |
+| TimeElapsed             | 211           |
+| TimestepsSoFar          | 60000         |
+| entloss                 | 0.0           |
+| entropy                 | 2.8491151     |
+| explained_variance_t... | 0.315         |
+| meankl                  | 0.0041947854  |
+| optimgain               | 0.003410269   |
+| surrcost                | -0.0027716472 |
+| surrgain                | 0.0040850993  |
+-------------------------------------------
+********** Iteration 2 ************
+Optimizing Policy...
+sampling
+done in 51.448 seconds
+learnpenalty
+done in 0.010 seconds
+computegrad
+done in 0.098 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00397          0
+         1   0.000792      0.004
+         2   0.000604     0.0104
+         3   0.000591     0.0162
+         4   9.95e-05     0.0188
+         5   0.000109      0.033
+         6   0.000142     0.0416
+         7   2.13e-05     0.0458
+         8   2.54e-05     0.0507
+         9   7.03e-05      0.055
+        10   5.31e-06      0.056
+done in 0.340 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 45.410 seconds
+-------------------------------------------
+| EpCostMean              | 52.7          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | 0.0351        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 90            |
+| TimeElapsed             | 309           |
+| TimestepsSoFar          | 90000         |
+| entloss                 | 0.0           |
+| entropy                 | 2.8478813     |
+| explained_variance_t... | 0.172         |
+| meankl                  | 0.0068114307  |
+| optimgain               | 0.0044169095  |
+| surrcost                | -0.0031759175 |
+| surrgain                | 0.0057630423  |
+-------------------------------------------
+********** Iteration 3 ************
+Optimizing Policy...
+sampling
+done in 49.503 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.081 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0   0.000648          0
+         1    0.00128    0.00487
+         2   0.000172     0.0133
+         3   0.000234     0.0146
+         4   0.000418     0.0195
+         5   0.000112     0.0424
+         6    2.3e-05     0.0535
+         7   2.22e-05     0.0565
+         8   4.32e-05     0.0571
+         9   4.04e-05     0.0592
+        10   1.01e-05     0.0608
+done in 0.282 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.287 seconds
+------------------------------------------
+| EpCostMean              | 34.4         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.0659      |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 120          |
+| TimeElapsed             | 402          |
+| TimestepsSoFar          | 120000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.8622828    |
+| explained_variance_t... | 0.278        |
+| meankl                  | 0.005461434  |
+| optimgain               | 0.0036951513 |
+| surrcost                | -0.003796525 |
+| surrgain                | 0.003582908  |
+------------------------------------------
+********** Iteration 4 ************
+Optimizing Policy...
+sampling
+done in 48.931 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00231          0
+         1   0.000232    0.00267
+         2   0.000488    0.00526
+         3   0.000267    0.00958
+         4   0.000152      0.016
+         5    0.00031     0.0287
+         6   4.56e-05     0.0367
+         7   4.11e-05     0.0489
+         8   3.94e-05     0.0537
+         9   6.89e-06     0.0541
+        10    9.7e-06     0.0552
+done in 0.278 seconds
+Expected: 0.003 Actual: 0.003
+Stepsize OK!
+vf and vcf
+done in 44.093 seconds
+-------------------------------------------
+| EpCostMean              | 31.3          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.0745       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 150           |
+| TimeElapsed             | 496           |
+| TimestepsSoFar          | 150000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8861554     |
+| explained_variance_t... | 0.447         |
+| meankl                  | 0.0063132285  |
+| optimgain               | 0.003371211   |
+| surrcost                | -0.0027338623 |
+| surrgain                | 0.004092859   |
+-------------------------------------------
+********** Iteration 5 ************
+Optimizing Policy...
+sampling
+done in 52.118 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0024          0
+         1   0.000411    0.00346
+         2   0.000265     0.0061
+         3   0.000724     0.0149
+         4   0.000275       0.02
+         5   0.000265     0.0263
+         6    6.1e-05     0.0401
+         7   4.22e-05     0.0472
+         8   1.19e-05      0.057
+         9   3.07e-05     0.0582
+        10    2.9e-06     0.0586
+done in 0.282 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 50.673 seconds
+------------------------------------------
+| EpCostMean              | 99.9         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | 0.154        |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 180          |
+| TimeElapsed             | 600          |
+| TimestepsSoFar          | 180000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.8837833    |
+| explained_variance_t... | 0.27         |
+| meankl                  | 0.0077778716 |
+| optimgain               | 0.0041194875 |
+| surrcost                | -0.003553251 |
+| surrgain                | 0.0047744424 |
+------------------------------------------
+********** Iteration 6 ************
+Optimizing Policy...
+sampling
+done in 70.653 seconds
+learnpenalty
+done in 0.033 seconds
+computegrad
+done in 0.147 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00135          0
+         1   0.000456    0.00213
+         2   0.000234    0.00617
+         3   0.000172      0.013
+         4   0.000245     0.0149
+         5   0.000102     0.0303
+         6   0.000121     0.0344
+         7   3.17e-05     0.0395
+         8   3.06e-05     0.0479
+         9   8.46e-05     0.0513
+        10    3.3e-06     0.0522
+done in 0.395 seconds
+Expected: 0.003 Actual: 0.003
+Stepsize OK!
+vf and vcf
+done in 52.843 seconds
+-------------------------------------------
+| EpCostMean              | 74.9          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | 0.124         |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 210           |
+| TimeElapsed             | 724           |
+| TimestepsSoFar          | 210000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8773706     |
+| explained_variance_t... | 0.482         |
+| meankl                  | 0.0055494267  |
+| optimgain               | 0.003171599   |
+| surrcost                | -0.0027536866 |
+| surrgain                | 0.0036660929  |
+-------------------------------------------
+********** Iteration 7 ************
+Optimizing Policy...
+sampling
+done in 55.823 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.078 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00447          0
+         1   0.000362    0.00297
+         2    0.00118    0.00634
+         3   0.000176     0.0147
+         4   0.000306     0.0191
+         5    7.9e-05     0.0349
+         6   0.000137     0.0422
+         7   7.16e-05     0.0477
+         8   5.56e-05     0.0561
+         9   4.09e-05     0.0567
+        10   1.62e-05     0.0593
+done in 0.266 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 44.592 seconds
+-------------------------------------------
+| EpCostMean              | 86.7          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | 0.0477        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 240           |
+| TimeElapsed             | 825           |
+| TimestepsSoFar          | 240000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8696518     |
+| explained_variance_t... | 0.574         |
+| meankl                  | 0.004687728   |
+| optimgain               | 0.0035527488  |
+| surrcost                | -0.0025214467 |
+| surrgain                | 0.00480331    |
+-------------------------------------------
+********** Iteration 8 ************
+Optimizing Policy...
+sampling
+done in 58.683 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.089 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00188          0
+         1   0.000907    0.00309
+         2    0.00039    0.00626
+         3   0.000545    0.00836
+         4   0.000149     0.0132
+         5   0.000502     0.0262
+         6   0.000163     0.0361
+         7   5.47e-05      0.047
+         8   2.92e-05     0.0557
+         9   4.02e-05     0.0591
+        10   1.05e-05     0.0594
+done in 0.268 seconds
+Expected: 0.004 Actual: 0.003
+Stepsize OK!
+vf and vcf
+done in 48.413 seconds
+-------------------------------------------
+| EpCostMean              | 96.9          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | 0.0727        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 270           |
+| TimeElapsed             | 933           |
+| TimestepsSoFar          | 270000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8654552     |
+| explained_variance_t... | 0.616         |
+| meankl                  | 0.006564523   |
+| optimgain               | 0.003385236   |
+| surrcost                | -0.0038186442 |
+| surrgain                | 0.0028461716  |
+-------------------------------------------
+********** Iteration 9 ************
+Optimizing Policy...
+sampling
+done in 56.262 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.107 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00573          0
+         1    0.00081    0.00305
+         2   0.000992    0.00637
+         3   0.000722      0.011
+         4   0.000163     0.0161
+         5   0.000278     0.0299
+         6   0.000161     0.0365
+         7   7.84e-05     0.0446
+         8   9.54e-05     0.0524
+         9   0.000105     0.0534
+        10   6.87e-05     0.0584
+done in 0.311 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 49.470 seconds
+-------------------------------------------
+| EpCostMean              | 104           |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.0988       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 300           |
+| TimeElapsed             | 1.04e+03      |
+| TimestepsSoFar          | 300000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8840156     |
+| explained_variance_t... | 0.622         |
+| meankl                  | 0.00686042    |
+| optimgain               | 0.004367023   |
+| surrcost                | -0.0046529155 |
+| surrgain                | 0.004002126   |
+-------------------------------------------
+********** Iteration 10 ************
+Optimizing Policy...
+sampling
+done in 55.929 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0142          0
+         1    0.00119    0.00417
+         2    0.00128    0.00689
+         3    0.00036     0.0107
+         4   0.000205     0.0138
+         5   0.000242     0.0174
+         6   0.000174     0.0257
+         7   8.09e-05     0.0382
+         8   4.39e-05     0.0465
+         9   0.000105     0.0544
+        10   2.04e-05     0.0553
+done in 0.275 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 47.665 seconds
+-------------------------------------------
+| EpCostMean              | 95.8          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.142        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 330           |
+| TimeElapsed             | 1.14e+03      |
+| TimestepsSoFar          | 330000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.86044       |
+| explained_variance_t... | 0.664         |
+| meankl                  | 0.006174039   |
+| optimgain               | 0.004363024   |
+| surrcost                | -0.0038065084 |
+| surrgain                | 0.005092104   |
+-------------------------------------------
+********** Iteration 11 ************
+Optimizing Policy...
+sampling
+done in 54.345 seconds
+learnpenalty
+done in 0.002 seconds
+computegrad
+done in 0.076 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00203          0
+         1   0.000673    0.00307
+         2   0.000547    0.00448
+         3   0.000574    0.00783
+         4   0.000514     0.0122
+         5   0.000336     0.0207
+         6   0.000183     0.0392
+         7   0.000109     0.0526
+         8   8.58e-05     0.0593
+         9   1.75e-05     0.0678
+        10   4.91e-05     0.0681
+done in 0.282 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 44.304 seconds
+-------------------------------------------
+| EpCostMean              | 125           |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.00289      |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 360           |
+| TimeElapsed             | 1.24e+03      |
+| TimestepsSoFar          | 360000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8465865     |
+| explained_variance_t... | 0.622         |
+| meankl                  | 0.0042364122  |
+| optimgain               | 0.0038901316  |
+| surrcost                | -0.0040979553 |
+| surrgain                | 0.003610498   |
+-------------------------------------------
+********** Iteration 12 ************
+Optimizing Policy...
+sampling
+done in 50.477 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00241          0
+         1    0.00122    0.00332
+         2   0.000931    0.00549
+         3   0.000653    0.00855
+         4   0.000496     0.0122
+         5   0.000348     0.0178
+         6   0.000209     0.0356
+         7    8.6e-05     0.0473
+         8   9.76e-05      0.053
+         9   0.000371     0.0579
+        10   4.93e-05     0.0597
+done in 0.272 seconds
+Expected: 0.004 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 47.951 seconds
+-------------------------------------------
+| EpCostMean              | 92            |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | 0.0307        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 390           |
+| TimeElapsed             | 1.34e+03      |
+| TimestepsSoFar          | 390000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8417044     |
+| explained_variance_t... | 0.651         |
+| meankl                  | 0.008294985   |
+| optimgain               | 0.0045460886  |
+| surrcost                | -0.0053359973 |
+| surrgain                | 0.0034554992  |
+-------------------------------------------
+********** Iteration 13 ************
+Optimizing Policy...
+sampling
+done in 51.671 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.090 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0032          0
+         1   0.000752      0.003
+         2   0.000829      0.005
+         3    0.00175       0.01
+         4   0.000606     0.0168
+         5   0.000522     0.0303
+         6   0.000218     0.0373
+         7   8.54e-05     0.0452
+         8    0.00011     0.0538
+         9   0.000479     0.0596
+        10   3.34e-05     0.0619
+done in 0.319 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 47.095 seconds
+-------------------------------------------
+| EpCostMean              | 76            |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.132        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 420           |
+| TimeElapsed             | 1.44e+03      |
+| TimestepsSoFar          | 420000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8509982     |
+| explained_variance_t... | 0.647         |
+| meankl                  | 0.008684165   |
+| optimgain               | 0.0045131566  |
+| surrcost                | -0.0045147506 |
+| surrgain                | 0.0045108995  |
+-------------------------------------------
+********** Iteration 14 ************
+Optimizing Policy...
+sampling
+done in 51.569 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.084 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00204          0
+         1   0.000729    0.00181
+         2    0.00111    0.00825
+         3   0.000879     0.0134
+         4   0.000515     0.0173
+         5   0.000396     0.0289
+         6   0.000439      0.037
+         7    0.00018     0.0503
+         8    0.00011     0.0609
+         9    0.00016     0.0668
+        10   3.33e-05     0.0675
+done in 0.278 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 48.672 seconds
+-------------------------------------------
+| EpCostMean              | 86.5          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.225        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 450           |
+| TimeElapsed             | 1.54e+03      |
+| TimestepsSoFar          | 450000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.850253      |
+| explained_variance_t... | 0.525         |
+| meankl                  | 0.0051229554  |
+| optimgain               | 0.0038240831  |
+| surrcost                | -0.0039748005 |
+| surrgain                | 0.0036052165  |
+-------------------------------------------
+********** Iteration 15 ************
+Optimizing Policy...
+sampling
+done in 53.557 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.074 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00319          0
+         1   0.000599     0.0022
+         2    0.00127    0.00663
+         3   0.000461     0.0104
+         4   0.000288     0.0141
+         5   0.000476     0.0276
+         6   0.000143     0.0333
+         7   0.000119     0.0459
+         8   5.04e-05     0.0586
+         9   0.000151     0.0606
+        10    1.7e-05     0.0616
+done in 0.270 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 47.442 seconds
+-------------------------------------------
+| EpCostMean              | 80.6          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.00156      |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 480           |
+| TimeElapsed             | 1.64e+03      |
+| TimestepsSoFar          | 480000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.863451      |
+| explained_variance_t... | 0.573         |
+| meankl                  | 0.0056260643  |
+| optimgain               | 0.0036037702  |
+| surrcost                | -0.0035322672 |
+| surrgain                | 0.0037101938  |
+-------------------------------------------
+********** Iteration 16 ************
+Optimizing Policy...
+sampling
+done in 51.429 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.092 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00236          0
+         1   0.000626    0.00217
+         2   0.000702    0.00621
+         3   0.000811    0.00909
+         4   0.000228     0.0145
+         5   0.000554     0.0226
+         6   0.000179      0.033
+         7   7.25e-05     0.0452
+         8   7.62e-05     0.0503
+         9    0.00017     0.0593
+        10   2.24e-05     0.0602
+done in 0.319 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.482 seconds
+-------------------------------------------
+| EpCostMean              | 95.9          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.139        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 510           |
+| TimeElapsed             | 1.74e+03      |
+| TimestepsSoFar          | 510000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8686755     |
+| explained_variance_t... | 0.559         |
+| meankl                  | 0.005007475   |
+| optimgain               | 0.0035951585  |
+| surrcost                | -0.0041954652 |
+| surrgain                | 0.002679423   |
+-------------------------------------------
+********** Iteration 17 ************
+Optimizing Policy...
+sampling
+done in 50.042 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00274          0
+         1    0.00105    0.00277
+         2     0.0011    0.00936
+         3    0.00103      0.018
+         4    0.00022     0.0199
+         5   0.000353     0.0227
+         6   0.000149     0.0311
+         7   9.28e-05     0.0401
+         8   6.72e-05     0.0518
+         9   0.000326     0.0547
+        10   4.51e-05     0.0575
+done in 0.375 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 49.123 seconds
+------------------------------------------
+| EpCostMean              | 47.6         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.0194      |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 540          |
+| TimeElapsed             | 1.84e+03     |
+| TimestepsSoFar          | 540000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.860112     |
+| explained_variance_t... | 0.67         |
+| meankl                  | 0.008273761  |
+| optimgain               | 0.0044389535 |
+| surrcost                | -0.004174487 |
+| surrgain                | 0.0048514465 |
+------------------------------------------
+********** Iteration 18 ************
+Optimizing Policy...
+sampling
+done in 52.862 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00688          0
+         1    0.00102    0.00286
+         2    0.00166    0.00549
+         3    0.00072     0.0104
+         4   0.000245     0.0149
+         5   0.000566     0.0205
+         6   0.000174     0.0288
+         7   6.19e-05     0.0376
+         8   9.94e-05     0.0468
+         9   0.000346     0.0488
+        10   3.99e-05     0.0536
+done in 0.258 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.235 seconds
+-------------------------------------------
+| EpCostMean              | 42.2          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.103        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 570           |
+| TimeElapsed             | 1.93e+03      |
+| TimestepsSoFar          | 570000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.876972      |
+| explained_variance_t... | 0.653         |
+| meankl                  | 0.007466872   |
+| optimgain               | 0.004257425   |
+| surrcost                | -0.0051236977 |
+| surrgain                | 0.0028775248  |
+-------------------------------------------
+********** Iteration 19 ************
+Optimizing Policy...
+sampling
+done in 47.217 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00324          0
+         1   0.000631    0.00212
+         2    0.00126    0.00505
+         3     0.0004    0.00905
+         4   0.000352     0.0137
+         5   0.000522     0.0272
+         6   0.000304     0.0337
+         7   9.26e-05     0.0527
+         8   0.000439     0.0604
+         9   7.71e-05     0.0623
+        10   0.000145     0.0671
+done in 0.261 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 41.962 seconds
+-------------------------------------------
+| EpCostMean              | 70.8          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.0999       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 600           |
+| TimeElapsed             | 2.02e+03      |
+| TimestepsSoFar          | 600000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8529515     |
+| explained_variance_t... | 0.679         |
+| meankl                  | 0.0049698353  |
+| optimgain               | 0.003935401   |
+| surrcost                | -0.0046661315 |
+| surrgain                | 0.0027461243  |
+-------------------------------------------
+********** Iteration 20 ************
+Optimizing Policy...
+sampling
+done in 47.042 seconds
+learnpenalty
+done in 0.002 seconds
+computegrad
+done in 0.076 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00678          0
+         1    0.00125    0.00256
+         2   0.000983    0.00574
+         3    0.00121    0.00958
+         4   0.000504     0.0153
+         5   0.000494     0.0222
+         6   0.000195     0.0315
+         7   0.000172     0.0467
+         8   0.000158     0.0633
+         9   0.000355     0.0651
+        10    4.8e-05     0.0697
+done in 0.267 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 44.394 seconds
+------------------------------------------
+| EpCostMean              | 35.6         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.0716      |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 630          |
+| TimeElapsed             | 2.12e+03     |
+| TimestepsSoFar          | 630000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.852713     |
+| explained_variance_t... | 0.505        |
+| meankl                  | 0.008197185  |
+| optimgain               | 0.0050670505 |
+| surrcost                | -0.006078484 |
+| surrgain                | 0.0033882305 |
+------------------------------------------
+********** Iteration 21 ************
+Optimizing Policy...
+sampling
+done in 58.827 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.099 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00876          0
+         1   0.000559    0.00251
+         2   0.000338    0.00551
+         3    0.00114     0.0103
+         4   0.000345     0.0163
+         5   0.000461     0.0228
+         6   0.000208     0.0304
+         7   9.26e-05     0.0448
+         8   7.28e-05     0.0551
+         9    0.00012     0.0558
+        10   2.37e-05     0.0601
+done in 0.349 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 60.501 seconds
+------------------------------------------
+| EpCostMean              | 34.6         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.149       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 660          |
+| TimeElapsed             | 2.24e+03     |
+| TimestepsSoFar          | 660000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.832525     |
+| explained_variance_t... | 0.5          |
+| meankl                  | 0.005293759  |
+| optimgain               | 0.0036893918 |
+| surrcost                | -0.004572813 |
+| surrgain                | 0.0021963755 |
+------------------------------------------
+********** Iteration 22 ************
+Optimizing Policy...
+sampling
+done in 64.953 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.099 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00555          0
+         1   0.000709    0.00251
+         2    0.00054    0.00393
+         3   0.000631    0.00596
+         4   0.000167     0.0129
+         5   0.000408     0.0226
+         6   7.47e-05     0.0315
+         7    6.8e-05     0.0386
+         8   0.000103     0.0465
+         9   0.000109     0.0476
+        10   0.000137     0.0513
+done in 0.344 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 56.336 seconds
+------------------------------------------
+| EpCostMean              | 20.8         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.127       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 690          |
+| TimeElapsed             | 2.36e+03     |
+| TimestepsSoFar          | 690000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.816073     |
+| explained_variance_t... | 0.473        |
+| meankl                  | 0.006183493  |
+| optimgain               | 0.0035435816 |
+| surrcost                | -0.005027346 |
+| surrgain                | 0.0009957702 |
+------------------------------------------
+********** Iteration 23 ************
+Optimizing Policy...
+sampling
+done in 57.133 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00467          0
+         1   0.000914    0.00227
+         2    0.00135    0.00584
+         3   0.000535    0.00908
+         4    0.00022      0.012
+         5   0.000279     0.0255
+         6   0.000214     0.0308
+         7   7.76e-05     0.0391
+         8   4.19e-05     0.0495
+         9   0.000298     0.0537
+        10   2.58e-05     0.0561
+done in 0.269 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 41.541 seconds
+-------------------------------------------
+| EpCostMean              | 47.6          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.0106       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 720           |
+| TimeElapsed             | 2.46e+03      |
+| TimestepsSoFar          | 720000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.804366      |
+| explained_variance_t... | 0.465         |
+| meankl                  | 0.0069574085  |
+| optimgain               | 0.003997886   |
+| surrcost                | -0.0037788085 |
+| surrgain                | 0.0043800515  |
+-------------------------------------------
+********** Iteration 24 ************
+Optimizing Policy...
+sampling
+done in 54.436 seconds
+learnpenalty
+done in 0.003 seconds
+computegrad
+done in 0.092 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0109          0
+         1   0.000573     0.0027
+         2    0.00105    0.00561
+         3   0.000694     0.0092
+         4   0.000258     0.0132
+         5   0.000624      0.022
+         6   0.000185     0.0351
+         7   6.53e-05     0.0447
+         8   0.000123     0.0495
+         9   0.000124     0.0503
+        10   6.67e-05     0.0571
+done in 0.278 seconds
+Expected: 0.004 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 43.722 seconds
+------------------------------------------
+| EpCostMean              | 28.1         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | 0.0997       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 750          |
+| TimeElapsed             | 2.56e+03     |
+| TimestepsSoFar          | 750000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.8023353    |
+| explained_variance_t... | 0.472        |
+| meankl                  | 0.0075432127 |
+| optimgain               | 0.0045452137 |
+| surrcost                | -0.0049243   |
+| surrgain                | 0.0038741669 |
+------------------------------------------
+********** Iteration 25 ************
+Optimizing Policy...
+sampling
+done in 48.813 seconds
+learnpenalty
+done in 0.002 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00622          0
+         1   0.000464    0.00215
+         2    0.00189    0.00863
+         3   0.000429     0.0132
+         4   0.000701     0.0261
+         5   0.000262     0.0347
+         6     0.0004     0.0423
+         7    8.7e-05     0.0479
+         8   0.000102      0.059
+         9   0.000551     0.0649
+        10   3.23e-05     0.0677
+done in 0.274 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 44.555 seconds
+-------------------------------------------
+| EpCostMean              | 41            |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.135        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 780           |
+| TimeElapsed             | 2.65e+03      |
+| TimestepsSoFar          | 780000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.806885      |
+| explained_variance_t... | 0.486         |
+| meankl                  | 0.0064818794  |
+| optimgain               | 0.004135901   |
+| surrcost                | -0.0052445596 |
+| surrgain                | 0.0021445516  |
+-------------------------------------------
+********** Iteration 26 ************
+Optimizing Policy...
+sampling
+done in 47.880 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00943          0
+         1    0.00043    0.00255
+         2   0.000951    0.00382
+         3   0.000785     0.0097
+         4   0.000298     0.0177
+         5   0.000307     0.0315
+         6   0.000209     0.0371
+         7   0.000152     0.0455
+         8    0.00011     0.0599
+         9   8.77e-05     0.0605
+        10   2.01e-05     0.0642
+done in 0.289 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.195 seconds
+-------------------------------------------
+| EpCostMean              | 44.5          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.187        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 810           |
+| TimeElapsed             | 2.74e+03      |
+| TimestepsSoFar          | 810000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.8035605     |
+| explained_variance_t... | 0.655         |
+| meankl                  | 0.007460417   |
+| optimgain               | 0.0044515063  |
+| surrcost                | -0.0050661275 |
+| surrgain                | 0.003333016   |
+-------------------------------------------
+********** Iteration 27 ************
+Optimizing Policy...
+sampling
+done in 49.381 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.085 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00897          0
+         1    0.00108    0.00258
+         2   0.000835    0.00568
+         3   0.000751     0.0152
+         4   0.000502     0.0171
+         5   0.000672     0.0248
+         6   0.000272     0.0372
+         7   0.000123     0.0516
+         8   0.000143     0.0633
+         9   0.000702     0.0666
+        10   3.23e-05     0.0721
+done in 0.283 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 44.838 seconds
+------------------------------------------
+| EpCostMean              | 37.8         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.213       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 840          |
+| TimeElapsed             | 2.84e+03     |
+| TimestepsSoFar          | 840000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.7709055    |
+| explained_variance_t... | 0.586        |
+| meankl                  | 0.011657781  |
+| optimgain               | 0.005116341  |
+| surrcost                | -0.006606122 |
+| surrgain                | 0.0023701773 |
+------------------------------------------
+********** Iteration 28 ************
+Optimizing Policy...
+sampling
+done in 47.612 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00155          0
+         1    0.00229    0.00405
+         2    0.00103    0.00855
+         3    0.00127     0.0144
+         4   0.000326     0.0163
+         5    0.00112     0.0238
+         6   0.000198     0.0358
+         7   0.000139      0.047
+         8    0.00017     0.0583
+         9   0.000302     0.0595
+        10   4.19e-05     0.0701
+done in 0.285 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.360 seconds
+-------------------------------------------
+| EpCostMean              | 45.6          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.248        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 870           |
+| TimeElapsed             | 2.93e+03      |
+| TimestepsSoFar          | 870000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.7400646     |
+| explained_variance_t... | 0.64          |
+| meankl                  | 0.005415753   |
+| optimgain               | 0.0037142697  |
+| surrcost                | -0.0041840463 |
+| surrgain                | 0.002837626   |
+-------------------------------------------
+********** Iteration 29 ************
+Optimizing Policy...
+sampling
+done in 48.432 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00997          0
+         1   0.000839    0.00249
+         2    0.00185    0.00465
+         3   0.000478    0.00813
+         4   0.000394     0.0106
+         5   0.000332     0.0294
+         6   0.000339     0.0343
+         7    0.00011     0.0419
+         8   0.000101      0.049
+         9   0.000447     0.0551
+        10    7.5e-05     0.0567
+done in 0.279 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 45.020 seconds
+------------------------------------------
+| EpCostMean              | 39.5         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.299       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 900          |
+| TimeElapsed             | 3.02e+03     |
+| TimestepsSoFar          | 900000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.7409902    |
+| explained_variance_t... | 0.551        |
+| meankl                  | 0.0067208293 |
+| optimgain               | 0.0039278427 |
+| surrcost                | -0.004371716 |
+| surrgain                | 0.0030899902 |
+------------------------------------------
+********** Iteration 30 ************
+Optimizing Policy...
+sampling
+done in 47.622 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00944          0
+         1    0.00127    0.00252
+         2    0.00205    0.00463
+         3   0.000716     0.0079
+         4   0.000328     0.0129
+         5   0.000591     0.0213
+         6    0.00026     0.0255
+         7   0.000117     0.0345
+         8   0.000226     0.0545
+         9   0.000547     0.0568
+        10   5.35e-05      0.062
+done in 0.282 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 46.074 seconds
+------------------------------------------
+| EpCostMean              | 25.4         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.264       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 930          |
+| TimeElapsed             | 3.12e+03     |
+| TimestepsSoFar          | 930000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.740459     |
+| explained_variance_t... | 0.52         |
+| meankl                  | 0.006860445  |
+| optimgain               | 0.004325635  |
+| surrcost                | -0.005306097 |
+| surrgain                | 0.002455547  |
+------------------------------------------
+********** Iteration 31 ************
+Optimizing Policy...
+sampling
+done in 47.858 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.090 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00396          0
+         1    0.00168    0.00214
+         2    0.00142    0.00496
+         3   0.000748    0.00679
+         4   0.000335     0.0102
+         5   0.000459     0.0137
+         6   0.000264     0.0205
+         7   0.000223     0.0337
+         8   0.000118     0.0498
+         9   0.000568     0.0549
+        10   7.35e-05     0.0568
+done in 0.273 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.308 seconds
+-------------------------------------------
+| EpCostMean              | 24.2          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.292        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 960           |
+| TimeElapsed             | 3.21e+03      |
+| TimestepsSoFar          | 960000        |
+| entloss                 | 0.0           |
+| entropy                 | 2.7526906     |
+| explained_variance_t... | 0.452         |
+| meankl                  | 0.0063832416  |
+| optimgain               | 0.0040537757  |
+| surrcost                | -0.0046768514 |
+| surrgain                | 0.0028543416  |
+-------------------------------------------
+********** Iteration 32 ************
+Optimizing Policy...
+sampling
+done in 47.858 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0186          0
+         1    0.00139    0.00303
+         2    0.00149    0.00558
+         3    0.00126    0.00784
+         4   0.000334     0.0127
+         5   0.000527     0.0267
+         6   0.000439     0.0317
+         7   0.000194     0.0414
+         8   8.21e-05     0.0482
+         9    0.00103     0.0525
+        10   0.000103     0.0577
+done in 0.262 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 48.077 seconds
+------------------------------------------
+| EpCostMean              | 43.3         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.393       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 990          |
+| TimeElapsed             | 3.3e+03      |
+| TimestepsSoFar          | 990000       |
+| entloss                 | 0.0          |
+| entropy                 | 2.760088     |
+| explained_variance_t... | 0.489        |
+| meankl                  | 0.007885408  |
+| optimgain               | 0.0050928304 |
+| surrcost                | -0.004899516 |
+| surrgain                | 0.005468455  |
+------------------------------------------
+********** Iteration 33 ************
+Optimizing Policy...
+sampling
+done in 46.761 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.084 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00208          0
+         1    0.00185    0.00223
+         2    0.00131     0.0064
+         3    0.00193     0.0107
+         4   0.000272      0.014
+         5    0.00039     0.0313
+         6   0.000669     0.0394
+         7   0.000205     0.0498
+         8   0.000243     0.0593
+         9   0.000179     0.0602
+        10   0.000514     0.0665
+done in 0.298 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 42.894 seconds
+-------------------------------------------
+| EpCostMean              | 0             |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.297        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1020          |
+| TimeElapsed             | 3.4e+03       |
+| TimestepsSoFar          | 1020000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.7727964     |
+| explained_variance_t... | 0.485         |
+| meankl                  | 0.007091441   |
+| optimgain               | 0.004682085   |
+| surrcost                | -0.0050272066 |
+| surrgain                | 0.00400668    |
+-------------------------------------------
+********** Iteration 34 ************
+Optimizing Policy...
+sampling
+done in 47.370 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00117          0
+         1    0.00163     0.0023
+         2   0.000918    0.00608
+         3   0.000493     0.0108
+         4    0.00127      0.013
+         5   0.000356     0.0233
+         6    0.00028      0.037
+         7   0.000363     0.0422
+         8   0.000105     0.0485
+         9   9.06e-05     0.0537
+        10   0.000334     0.0549
+done in 0.266 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.326 seconds
+------------------------------------------
+| EpCostMean              | 4.42         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.154       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1050         |
+| TimeElapsed             | 3.49e+03     |
+| TimestepsSoFar          | 1050000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7863817    |
+| explained_variance_t... | 0.483        |
+| meankl                  | 0.005653485  |
+| optimgain               | 0.0037020326 |
+| surrcost                | -0.003825997 |
+| surrgain                | 0.0034580973 |
+------------------------------------------
+********** Iteration 35 ************
+Optimizing Policy...
+sampling
+done in 47.663 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00505          0
+         1    0.00236    0.00222
+         2    0.00126    0.00641
+         3    0.00172    0.00867
+         4   0.000608     0.0118
+         5   0.000622     0.0246
+         6   0.000979     0.0327
+         7   0.000418     0.0432
+         8   0.000249     0.0561
+         9   0.000262     0.0662
+        10   0.000135     0.0669
+done in 0.271 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.749 seconds
+------------------------------------------
+| EpCostMean              | 6.62         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.339       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1080         |
+| TimeElapsed             | 3.58e+03     |
+| TimestepsSoFar          | 1080000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7863772    |
+| explained_variance_t... | 0.331        |
+| meankl                  | 0.0056541143 |
+| optimgain               | 0.0040935725 |
+| surrcost                | -0.004411686 |
+| surrgain                | 0.0034649922 |
+------------------------------------------
+********** Iteration 36 ************
+Optimizing Policy...
+sampling
+done in 47.073 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.078 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00205          0
+         1    0.00168     0.0017
+         2    0.00147    0.00893
+         3    0.00134     0.0145
+         4    0.00053     0.0163
+         5   0.000473     0.0255
+         6   0.000557     0.0305
+         7   0.000315      0.044
+         8   0.000141     0.0549
+         9   0.000753     0.0591
+        10   0.000139     0.0615
+done in 0.273 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.270 seconds
+------------------------------------------
+| EpCostMean              | 0            |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.247       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1110         |
+| TimeElapsed             | 3.67e+03     |
+| TimestepsSoFar          | 1110000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7705803    |
+| explained_variance_t... | 0.243        |
+| meankl                  | 0.0078095687 |
+| optimgain               | 0.0041045174 |
+| surrcost                | -0.004556311 |
+| surrgain                | 0.0032095877 |
+------------------------------------------
+********** Iteration 37 ************
+Optimizing Policy...
+sampling
+done in 47.327 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00752          0
+         1    0.00161    0.00196
+         2   0.000615    0.00399
+         3    0.00197    0.00873
+         4    0.00034     0.0115
+         5   0.000273      0.017
+         6   0.000532     0.0215
+         7   0.000244     0.0289
+         8   0.000173     0.0399
+         9   0.000474      0.047
+        10   0.000173     0.0487
+done in 0.270 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.883 seconds
+-------------------------------------------
+| EpCostMean              | 13.7          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.103        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1140          |
+| TimeElapsed             | 3.76e+03      |
+| TimestepsSoFar          | 1140000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.7629578     |
+| explained_variance_t... | -0.0399       |
+| meankl                  | 0.0072859228  |
+| optimgain               | 0.0039546015  |
+| surrcost                | -0.0046969075 |
+| surrgain                | 0.0024814373  |
+-------------------------------------------
+********** Iteration 38 ************
+Optimizing Policy...
+sampling
+done in 46.825 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.085 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00222          0
+         1    0.00162    0.00161
+         2    0.00119     0.0117
+         3    0.00113     0.0177
+         4    0.00111     0.0268
+         5   0.000968     0.0289
+         6   0.000986      0.036
+         7   0.000413     0.0443
+         8   0.000302     0.0529
+         9   0.000136     0.0695
+        10   0.000277     0.0756
+done in 0.281 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 42.490 seconds
+------------------------------------------
+| EpCostMean              | 30.1         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.206       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1170         |
+| TimeElapsed             | 3.85e+03     |
+| TimestepsSoFar          | 1170000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7495177    |
+| explained_variance_t... | 0.518        |
+| meankl                  | 0.0054967203 |
+| optimgain               | 0.0047072424 |
+| surrcost                | -0.00560389  |
+| surrgain                | 0.0029245478 |
+------------------------------------------
+********** Iteration 39 ************
+Optimizing Policy...
+sampling
+done in 50.386 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.081 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00466          0
+         1    0.00238    0.00183
+         2    0.00219    0.00681
+         3    0.00448     0.0119
+         4   0.000712     0.0195
+         5   0.000835     0.0242
+         6   0.000418     0.0288
+         7   0.000503     0.0386
+         8   0.000347      0.049
+         9    0.00109     0.0595
+        10   0.000233     0.0619
+done in 0.279 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 42.920 seconds
+-------------------------------------------
+| EpCostMean              | 18.7          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.186        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1200          |
+| TimeElapsed             | 3.94e+03      |
+| TimestepsSoFar          | 1200000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.741234      |
+| explained_variance_t... | 0.338         |
+| meankl                  | 0.00874116    |
+| optimgain               | 0.0050155427  |
+| surrcost                | -0.0054829447 |
+| surrgain                | 0.004084973   |
+-------------------------------------------
+********** Iteration 40 ************
+Optimizing Policy...
+sampling
+done in 49.602 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.085 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00607          0
+         1    0.00246    0.00185
+         2    0.00116    0.00503
+         3    0.00218    0.00858
+         4   0.000683     0.0118
+         5   0.000958     0.0191
+         6    0.00053     0.0268
+         7   0.000373      0.035
+         8   0.000315      0.048
+         9    0.00152     0.0565
+        10     0.0001     0.0595
+done in 0.257 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.035 seconds
+------------------------------------------
+| EpCostMean              | 12.4         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.192       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1230         |
+| TimeElapsed             | 4.04e+03     |
+| TimestepsSoFar          | 1230000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7371385    |
+| explained_variance_t... | 0.406        |
+| meankl                  | 0.0061535295 |
+| optimgain               | 0.004177028  |
+| surrcost                | -0.004770136 |
+| surrgain                | 0.0029955555 |
+------------------------------------------
+********** Iteration 41 ************
+Optimizing Policy...
+sampling
+done in 46.454 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.087 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00547          0
+         1    0.00286    0.00216
+         2   0.000894     0.0043
+         3    0.00226    0.00634
+         4    0.00057     0.0113
+         5   0.000869      0.016
+         6   0.000406     0.0235
+         7   0.000301     0.0304
+         8   0.000223     0.0371
+         9   0.000881      0.046
+        10   0.000139     0.0478
+done in 0.267 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.333 seconds
+------------------------------------------
+| EpCostMean              | 24.8         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.139       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1260         |
+| TimeElapsed             | 4.13e+03     |
+| TimestepsSoFar          | 1260000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7372077    |
+| explained_variance_t... | 0.338        |
+| meankl                  | 0.00792541   |
+| optimgain               | 0.004182977  |
+| surrcost                | -0.004851721 |
+| surrgain                | 0.0028497376 |
+------------------------------------------
+********** Iteration 42 ************
+Optimizing Policy...
+sampling
+done in 47.030 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.088 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0024          0
+         1    0.00197    0.00364
+         2    0.00272    0.00593
+         3   0.000507     0.0109
+         4   0.000928     0.0155
+         5      0.002     0.0204
+         6   0.000646     0.0254
+         7   0.000506     0.0375
+         8   0.000251     0.0455
+         9    0.00015     0.0538
+        10    0.00102     0.0592
+done in 0.277 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 44.232 seconds
+------------------------------------------
+| EpCostMean              | 2.67         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.0818      |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1290         |
+| TimeElapsed             | 4.22e+03     |
+| TimestepsSoFar          | 1290000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.746752     |
+| explained_variance_t... | 0.488        |
+| meankl                  | 0.008643672  |
+| optimgain               | 0.0049800873 |
+| surrcost                | -0.005909505 |
+| surrgain                | 0.0031279316 |
+------------------------------------------
+********** Iteration 43 ************
+Optimizing Policy...
+sampling
+done in 47.282 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.075 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00185          0
+         1    0.00127    0.00406
+         2    0.00233    0.00644
+         3   0.000478     0.0105
+         4    0.00114      0.012
+         5   0.000846       0.02
+         6   0.000427      0.027
+         7   0.000296     0.0331
+         8   0.000127     0.0419
+         9   9.34e-05     0.0479
+        10   0.000708     0.0499
+done in 0.276 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.882 seconds
+------------------------------------------
+| EpCostMean              | 5.78         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.163       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1320         |
+| TimeElapsed             | 4.31e+03     |
+| TimestepsSoFar          | 1320000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7439208    |
+| explained_variance_t... | 0.191        |
+| meankl                  | 0.0074369214 |
+| optimgain               | 0.003974318  |
+| surrcost                | -0.004750783 |
+| surrgain                | 0.0024290252 |
+------------------------------------------
+********** Iteration 44 ************
+Optimizing Policy...
+sampling
+done in 47.591 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00438          0
+         1    0.00116    0.00172
+         2    0.00122     0.0041
+         3    0.00147    0.00609
+         4   0.000404     0.0164
+         5    0.00075     0.0255
+         6   0.000715      0.034
+         7   0.000309     0.0429
+         8   0.000134     0.0507
+         9   0.000578     0.0519
+        10    0.00012     0.0565
+done in 0.280 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.954 seconds
+------------------------------------------
+| EpCostMean              | 27.8         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.209       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1350         |
+| TimeElapsed             | 4.4e+03      |
+| TimestepsSoFar          | 1350000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7493584    |
+| explained_variance_t... | 0.276        |
+| meankl                  | 0.006802641  |
+| optimgain               | 0.0037698313 |
+| surrcost                | -0.004840507 |
+| surrgain                | 0.001640156  |
+------------------------------------------
+********** Iteration 45 ************
+Optimizing Policy...
+sampling
+done in 47.392 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00388          0
+         1   0.000791    0.00155
+         2   0.000733    0.00742
+         3   0.000422      0.011
+         4   0.000352     0.0188
+         5   0.000381     0.0198
+         6   0.000228      0.022
+         7   0.000266     0.0294
+         8   0.000208     0.0391
+         9   8.22e-05     0.0476
+        10   0.000394     0.0492
+done in 0.277 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.931 seconds
+------------------------------------------
+| EpCostMean              | 26.6         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.0206      |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1380         |
+| TimeElapsed             | 4.49e+03     |
+| TimestepsSoFar          | 1380000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.750249     |
+| explained_variance_t... | 0.24         |
+| meankl                  | 0.008982796  |
+| optimgain               | 0.0037865753 |
+| surrcost                | -0.005141699 |
+| surrgain                | 0.0010922526 |
+------------------------------------------
+********** Iteration 46 ************
+Optimizing Policy...
+sampling
+done in 46.301 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00979          0
+         1   0.000631    0.00187
+         2    0.00179    0.00409
+         3   0.000715    0.00744
+         4   0.000638     0.0133
+         5   0.000795     0.0232
+         6   0.000201     0.0291
+         7   0.000341     0.0371
+         8   0.000178     0.0451
+         9   0.000203     0.0553
+        10   0.000135      0.056
+done in 0.267 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.624 seconds
+-------------------------------------------
+| EpCostMean              | 23.6          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.212        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1410          |
+| TimeElapsed             | 4.58e+03      |
+| TimestepsSoFar          | 1410000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.749507      |
+| explained_variance_t... | 0.45          |
+| meankl                  | 0.0070383744  |
+| optimgain               | 0.0042808307  |
+| surrcost                | -0.0053182472 |
+| surrgain                | 0.002218465   |
+-------------------------------------------
+********** Iteration 47 ************
+Optimizing Policy...
+sampling
+done in 47.069 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00451          0
+         1    0.00198      0.002
+         2   0.000719    0.00388
+         3    0.00141    0.00857
+         4   0.000474     0.0103
+         5   0.000569     0.0179
+         6   0.000256     0.0228
+         7   0.000343     0.0307
+         8   0.000204     0.0392
+         9   0.000194     0.0481
+        10   0.000218     0.0489
+done in 0.281 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.839 seconds
+-------------------------------------------
+| EpCostMean              | 21.9          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.015        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1440          |
+| TimeElapsed             | 4.68e+03      |
+| TimestepsSoFar          | 1440000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.7414744     |
+| explained_variance_t... | 0.521         |
+| meankl                  | 0.008666809   |
+| optimgain               | 0.0039044654  |
+| surrcost                | -0.0051496257 |
+| surrgain                | 0.0014302734  |
+-------------------------------------------
+********** Iteration 48 ************
+Optimizing Policy...
+sampling
+done in 47.148 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.075 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00435          0
+         1    0.00306     0.0023
+         2   0.000723    0.00509
+         3    0.00236    0.00703
+         4    0.00059     0.0159
+         5     0.0009     0.0209
+         6   0.000396     0.0284
+         7   0.000552     0.0438
+         8   0.000188     0.0537
+         9   0.000979     0.0581
+        10   0.000107      0.061
+done in 0.262 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 43.283 seconds
+------------------------------------------
+| EpCostMean              | 18.8         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.083       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1470         |
+| TimeElapsed             | 4.77e+03     |
+| TimestepsSoFar          | 1470000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7655299    |
+| explained_variance_t... | 0.493        |
+| meankl                  | 0.008639444  |
+| optimgain               | 0.004949648  |
+| surrcost                | -0.005761489 |
+| surrgain                | 0.0033384867 |
+------------------------------------------
+********** Iteration 49 ************
+Optimizing Policy...
+sampling
+done in 46.547 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.076 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0154          0
+         1    0.00153    0.00223
+         2    0.00159    0.00643
+         3    0.00136    0.00802
+         4    0.00139     0.0198
+         5    0.00072     0.0273
+         6   0.000538     0.0337
+         7   0.000623     0.0382
+         8   0.000214     0.0505
+         9    0.00111     0.0631
+        10   0.000376     0.0654
+done in 0.264 seconds
+Expected: 0.006 Actual: 0.006
+Stepsize OK!
+vf and vcf
+done in 43.889 seconds
+-------------------------------------------
+| EpCostMean              | 7.12          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.19         |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1500          |
+| TimeElapsed             | 4.86e+03      |
+| TimestepsSoFar          | 1500000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.7618108     |
+| explained_variance_t... | 0.459         |
+| meankl                  | 0.008225461   |
+| optimgain               | 0.0055347565  |
+| surrcost                | -0.0063509564 |
+| surrgain                | 0.0039183493  |
+-------------------------------------------
+********** Iteration 50 ************
+Optimizing Policy...
+sampling
+done in 46.693 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.075 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00167          0
+         1    0.00225     0.0016
+         2   0.000771    0.00659
+         3    0.00172     0.0107
+         4   0.000661     0.0133
+         5   0.000759     0.0175
+         6   0.000389      0.028
+         7    0.00056     0.0332
+         8   0.000436     0.0445
+         9   0.000369     0.0548
+        10   0.000128     0.0555
+done in 0.272 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.604 seconds
+------------------------------------------
+| EpCostMean              | 12.2         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.0959      |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1530         |
+| TimeElapsed             | 4.95e+03     |
+| TimestepsSoFar          | 1530000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7657154    |
+| explained_variance_t... | 0.0713       |
+| meankl                  | 0.0068859095 |
+| optimgain               | 0.003804992  |
+| surrcost                | -0.004380249 |
+| surrgain                | 0.002668514  |
+------------------------------------------
+********** Iteration 51 ************
+Optimizing Policy...
+sampling
+done in 49.203 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0276          0
+         1    0.00244    0.00281
+         2    0.00178     0.0041
+         3   0.000786    0.00528
+         4   0.000666     0.0101
+         5   0.000578     0.0146
+         6   0.000428      0.024
+         7   0.000434     0.0328
+         8   0.000418      0.045
+         9    0.00242     0.0547
+        10   0.000138       0.06
+done in 0.275 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 43.220 seconds
+-------------------------------------------
+| EpCostMean              | 17.9          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.038        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1560          |
+| TimeElapsed             | 5.04e+03      |
+| TimestepsSoFar          | 1560000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.7644048     |
+| explained_variance_t... | 0.437         |
+| meankl                  | 0.006006316   |
+| optimgain               | 0.0046589435  |
+| surrcost                | -0.0058933166 |
+| surrgain                | 0.0022258575  |
+-------------------------------------------
+********** Iteration 52 ************
+Optimizing Policy...
+sampling
+done in 46.814 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.076 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00382          0
+         1    0.00171    0.00181
+         2    0.00196      0.005
+         3     0.0017    0.00709
+         4   0.000476     0.0106
+         5    0.00082     0.0167
+         6   0.000538     0.0283
+         7   0.000557     0.0373
+         8   0.000351     0.0505
+         9     0.0012     0.0593
+        10   0.000122     0.0613
+done in 0.271 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 43.469 seconds
+------------------------------------------
+| EpCostMean              | 23.1         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.286       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1590         |
+| TimeElapsed             | 5.13e+03     |
+| TimestepsSoFar          | 1590000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7609859    |
+| explained_variance_t... | 0.477        |
+| meankl                  | 0.0076658814 |
+| optimgain               | 0.0045457496 |
+| surrcost                | -0.005301939 |
+| surrgain                | 0.0030586752 |
+------------------------------------------
+********** Iteration 53 ************
+Optimizing Policy...
+sampling
+done in 47.343 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.079 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00571          0
+         1    0.00227    0.00158
+         2    0.00112    0.00511
+         3    0.00134    0.00798
+         4   0.000505    0.00976
+         5   0.000437     0.0172
+         6   0.000212     0.0205
+         7   0.000386     0.0329
+         8   0.000231     0.0403
+         9    0.00101     0.0426
+        10   9.94e-05     0.0483
+done in 0.267 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.125 seconds
+-------------------------------------------
+| EpCostMean              | 18.7          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.243        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1620          |
+| TimeElapsed             | 5.22e+03      |
+| TimestepsSoFar          | 1620000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.7584708     |
+| explained_variance_t... | 0.142         |
+| meankl                  | 0.0055504926  |
+| optimgain               | 0.0036528734  |
+| surrcost                | -0.0045653726 |
+| surrgain                | 0.0018627492  |
+-------------------------------------------
+********** Iteration 54 ************
+Optimizing Policy...
+sampling
+done in 46.572 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.074 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0027          0
+         1   0.000687   0.000938
+         2    0.00131    0.00687
+         3    0.00113     0.0109
+         4   0.000246      0.013
+         5   0.000299     0.0156
+         6   0.000409     0.0224
+         7   0.000199     0.0373
+         8   0.000898     0.0429
+         9   0.000147     0.0451
+        10   8.31e-05     0.0491
+done in 0.290 seconds
+Expected: 0.004 Actual: 0.003
+Stepsize OK!
+vf and vcf
+done in 43.034 seconds
+------------------------------------------
+| EpCostMean              | 16.9         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.15        |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1650         |
+| TimeElapsed             | 5.31e+03     |
+| TimestepsSoFar          | 1650000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7793868    |
+| explained_variance_t... | 0.385        |
+| meankl                  | 0.006015454  |
+| optimgain               | 0.0034742467 |
+| surrcost                | -0.003970308 |
+| surrgain                | 0.0025036428 |
+------------------------------------------
+********** Iteration 55 ************
+Optimizing Policy...
+sampling
+done in 46.801 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.076 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00486          0
+         1    0.00233     0.0019
+         2    0.00257    0.00505
+         3    0.00105    0.00702
+         4   0.000922     0.0124
+         5    0.00031     0.0179
+         6   0.000219      0.026
+         7   0.000304     0.0342
+         8   0.000245     0.0405
+         9   0.000219     0.0447
+        10   0.000419     0.0461
+done in 0.257 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 44.632 seconds
+-------------------------------------------
+| EpCostMean              | 3.1           |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.232        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1680          |
+| TimeElapsed             | 5.41e+03      |
+| TimestepsSoFar          | 1680000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.7752993     |
+| explained_variance_t... | 0.467         |
+| meankl                  | 0.008043042   |
+| optimgain               | 0.004186746   |
+| surrcost                | -0.0044738646 |
+| surrgain                | 0.0036270283  |
+-------------------------------------------
+********** Iteration 56 ************
+Optimizing Policy...
+sampling
+done in 47.758 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.076 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0134          0
+         1    0.00153    0.00225
+         2    0.00243    0.00346
+         3    0.00103     0.0074
+         4   0.000499     0.0138
+         5   0.000592     0.0173
+         6   0.000536     0.0264
+         7    0.00065     0.0375
+         8   0.000285     0.0564
+         9   0.000644     0.0576
+        10   0.000145     0.0637
+done in 0.266 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 43.620 seconds
+------------------------------------------
+| EpCostMean              | 19.6         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | -0.0381      |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1710         |
+| TimeElapsed             | 5.5e+03      |
+| TimestepsSoFar          | 1710000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.7958982    |
+| explained_variance_t... | 0.0238       |
+| meankl                  | 0.009521967  |
+| optimgain               | 0.00507836   |
+| surrcost                | -0.005478137 |
+| surrgain                | 0.004301687  |
+------------------------------------------
+********** Iteration 57 ************
+Optimizing Policy...
+sampling
+done in 46.862 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.080 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00404          0
+         1    0.00247    0.00158
+         2    0.00101    0.00503
+         3   0.000669    0.00611
+         4   0.000842      0.013
+         5   0.000674      0.019
+         6   0.000396     0.0313
+         7   0.000275     0.0371
+         8   0.000383     0.0427
+         9   0.000504     0.0438
+        10   0.000104     0.0497
+done in 0.281 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.654 seconds
+------------------------------------------
+| EpCostMean              | 29.7         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | 0.0214       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1740         |
+| TimeElapsed             | 5.59e+03     |
+| TimestepsSoFar          | 1740000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.802644     |
+| explained_variance_t... | 0.265        |
+| meankl                  | 0.008030259  |
+| optimgain               | 0.004067708  |
+| surrcost                | -0.004695634 |
+| surrgain                | 0.0028508971 |
+------------------------------------------
+********** Iteration 58 ************
+Optimizing Policy...
+sampling
+done in 46.784 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00447          0
+         1    0.00307    0.00209
+         2   0.000828    0.00402
+         3    0.00049    0.00467
+         4    0.00118     0.0107
+         5   0.000512     0.0203
+         6   0.000533     0.0287
+         7   0.000442     0.0423
+         8   0.000172     0.0535
+         9   0.000103     0.0608
+        10   0.000683     0.0626
+done in 0.274 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.053 seconds
+------------------------------------------
+| EpCostMean              | 57.6         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | 0.0262       |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1770         |
+| TimeElapsed             | 5.68e+03     |
+| TimestepsSoFar          | 1770000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.8020792    |
+| explained_variance_t... | 0.225        |
+| meankl                  | 0.0055241636 |
+| optimgain               | 0.0039058689 |
+| surrcost                | -0.00381486  |
+| surrgain                | 0.0040820823 |
+------------------------------------------
+********** Iteration 59 ************
+Optimizing Policy...
+sampling
+done in 46.899 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.076 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00352          0
+         1   0.000952    0.00116
+         2    0.00251    0.00331
+         3   0.000993    0.00931
+         4   0.000498     0.0151
+         5   0.000712      0.022
+         6   0.000403     0.0275
+         7   0.000461     0.0352
+         8    0.00187     0.0464
+         9   0.000558       0.05
+        10   0.000435     0.0578
+done in 0.260 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 43.070 seconds
+-------------------------------------------
+| EpCostMean              | 40            |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.00918      |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1800          |
+| TimeElapsed             | 5.77e+03      |
+| TimestepsSoFar          | 1800000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.8106182     |
+| explained_variance_t... | 0.418         |
+| meankl                  | 0.008135347   |
+| optimgain               | 0.004275967   |
+| surrcost                | -0.0046466836 |
+| surrgain                | 0.0035575063  |
+-------------------------------------------
+********** Iteration 60 ************
+Optimizing Policy...
+sampling
+done in 46.855 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.073 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0027          0
+         1    0.00394    0.00326
+         2    0.00142    0.00656
+         3    0.00242    0.00879
+         4   0.000658     0.0111
+         5    0.00128      0.017
+         6   0.000569     0.0252
+         7   0.000447     0.0302
+         8   0.000237     0.0506
+         9    0.00044     0.0576
+        10   0.000243     0.0585
+done in 0.280 seconds
+Expected: 0.005 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.926 seconds
+-------------------------------------------
+| EpCostMean              | 27.4          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.0964       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1830          |
+| TimeElapsed             | 5.86e+03      |
+| TimestepsSoFar          | 1830000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.828703      |
+| explained_variance_t... | 0.466         |
+| meankl                  | 0.007213129   |
+| optimgain               | 0.0044605793  |
+| surrcost                | -0.0049123494 |
+| surrgain                | 0.0035843363  |
+-------------------------------------------
+********** Iteration 61 ************
+Optimizing Policy...
+sampling
+done in 47.231 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00364          0
+         1     0.0018    0.00166
+         2   0.000986    0.00428
+         3    0.00256     0.0063
+         4   0.000485     0.0107
+         5   0.000821      0.016
+         6    0.00049     0.0201
+         7   0.000794     0.0324
+         8   0.000194     0.0438
+         9   0.000428     0.0522
+        10   0.000256     0.0531
+done in 0.272 seconds
+Expected: 0.004 Actual: 0.004
+Stepsize OK!
+vf and vcf
+done in 42.658 seconds
+------------------------------------------
+| EpCostMean              | 24.2         |
+| EpLenMean               | 1e+03        |
+| EpRewMean               | 0.161        |
+| EpThisIter              | 30           |
+| EpisodesSoFar           | 1860         |
+| TimeElapsed             | 5.95e+03     |
+| TimestepsSoFar          | 1860000      |
+| entloss                 | 0.0          |
+| entropy                 | 2.8349788    |
+| explained_variance_t... | 0.414        |
+| meankl                  | 0.0077365995 |
+| optimgain               | 0.004088642  |
+| surrcost                | -0.004787669 |
+| surrgain                | 0.0027312073 |
+------------------------------------------
+********** Iteration 62 ************
+Optimizing Policy...
+sampling
+done in 49.197 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.084 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0113          0
+         1    0.00309    0.00225
+         2    0.00192    0.00418
+         3    0.00169    0.00537
+         4    0.00125      0.011
+         5   0.000657     0.0157
+         6   0.000882     0.0226
+         7   0.000816     0.0364
+         8    0.00042     0.0543
+         9   0.000554     0.0648
+        10   0.000294     0.0657
+done in 0.276 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 43.530 seconds
+-------------------------------------------
+| EpCostMean              | 31.4          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.138        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1890          |
+| TimeElapsed             | 6.04e+03      |
+| TimestepsSoFar          | 1890000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.8631296     |
+| explained_variance_t... | 0.679         |
+| meankl                  | 0.007939302   |
+| optimgain               | 0.0045119114  |
+| surrcost                | -0.0054505514 |
+| surrgain                | 0.002686328   |
+-------------------------------------------
+********** Iteration 63 ************
+Optimizing Policy...
+sampling
+done in 46.836 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.090 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0215          0
+         1    0.00144      0.002
+         2   0.000753    0.00469
+         3    0.00195    0.00621
+         4    0.00194     0.0117
+         5   0.000913     0.0212
+         6    0.00163     0.0309
+         7   0.000538     0.0412
+         8   0.000355     0.0518
+         9    0.00158     0.0591
+        10   0.000177     0.0613
+done in 0.259 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 43.141 seconds
+-------------------------------------------
+| EpCostMean              | 69.4          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.199        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1920          |
+| TimeElapsed             | 6.13e+03      |
+| TimestepsSoFar          | 1920000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.8633568     |
+| explained_variance_t... | 0.434         |
+| meankl                  | 0.008012859   |
+| optimgain               | 0.0050426293  |
+| surrcost                | -0.0066055255 |
+| surrgain                | 0.0019872803  |
+-------------------------------------------
+********** Iteration 64 ************
+Optimizing Policy...
+sampling
+done in 47.044 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.084 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00399          0
+         1    0.00356    0.00246
+         2    0.00176    0.00489
+         3    0.00177    0.00611
+         4    0.00121      0.012
+         5    0.00101      0.017
+         6   0.000744     0.0217
+         7   0.000613     0.0275
+         8   0.000415     0.0457
+         9   0.000287     0.0586
+        10   0.000336     0.0592
+done in 0.265 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 43.497 seconds
+-------------------------------------------
+| EpCostMean              | 53.3          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | 0.00991       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1950          |
+| TimeElapsed             | 6.22e+03      |
+| TimestepsSoFar          | 1950000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.8693104     |
+| explained_variance_t... | 0.449         |
+| meankl                  | 0.0074951467  |
+| optimgain               | 0.004717204   |
+| surrcost                | -0.0053253295 |
+| surrgain                | 0.0035212555  |
+-------------------------------------------
+********** Iteration 65 ************
+Optimizing Policy...
+sampling
+done in 46.691 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.077 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0    0.00557          0
+         1     0.0061    0.00202
+         2    0.00239    0.00659
+         3    0.00161    0.00858
+         4    0.00087     0.0101
+         5   0.000884     0.0147
+         6   0.000336     0.0226
+         7    0.00117     0.0291
+         8   0.000751     0.0434
+         9    0.00224     0.0463
+        10   0.000144     0.0593
+done in 0.264 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 42.922 seconds
+-------------------------------------------
+| EpCostMean              | 36.4          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.0647       |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 1980          |
+| TimeElapsed             | 6.31e+03      |
+| TimestepsSoFar          | 1980000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.875981      |
+| explained_variance_t... | 0.132         |
+| meankl                  | 0.0114372     |
+| optimgain               | 0.0052024564  |
+| surrcost                | -0.0060947877 |
+| surrgain                | 0.0034380392  |
+-------------------------------------------
+********** Iteration 66 ************
+Optimizing Policy...
+sampling
+done in 47.034 seconds
+learnpenalty
+done in 0.001 seconds
+computegrad
+done in 0.083 seconds
+conjugate_gradient
+      iter residual norm  soln norm
+         0     0.0227          0
+         1    0.00306    0.00184
+         2    0.00106    0.00414
+         3    0.00119    0.00557
+         4    0.00162    0.00783
+         5    0.00148      0.019
+         6    0.00111     0.0359
+         7   0.000307     0.0436
+         8    0.00116      0.051
+         9   0.000308     0.0522
+        10   0.000134     0.0573
+done in 0.270 seconds
+Expected: 0.005 Actual: 0.005
+Stepsize OK!
+vf and vcf
+done in 42.337 seconds
+-------------------------------------------
+| EpCostMean              | 14.1          |
+| EpLenMean               | 1e+03         |
+| EpRewMean               | -0.115        |
+| EpThisIter              | 30            |
+| EpisodesSoFar           | 2010          |
+| TimeElapsed             | 6.4e+03       |
+| TimestepsSoFar          | 2010000       |
+| entloss                 | 0.0           |
+| entropy                 | 2.8767266     |
+| explained_variance_t... | 0.424         |
+| meankl                  | 0.009862378   |
+| optimgain               | 0.004936559   |
+| surrcost                | -0.0060552745 |
+| surrgain                | 0.0027149622  |
+-------------------------------------------
+Iteration  0  done.
+***** STATS FOR THIS RUN *****
+MEAN :  0.19150417
+STD :  0.70098823
+COST_MEAN :  0.0
+COST_STD :  0.0
+******************************
+done ::  data/models/TRPO_lagrangian_initial_policy_steps_Safexp-PointGoal1slippery-v0_2000000_.pkl
+
+Process finished with exit code 0
+

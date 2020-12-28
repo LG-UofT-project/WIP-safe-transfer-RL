@@ -1223,7 +1223,7 @@ class ReinforcedGAT:
 
 
     def collect_experience_from_real_env(
-            self,
+            self, constrained = False,
             num_real_traj=None):
         """
         Collects real world experience by deploying target policy on real
@@ -1248,13 +1248,22 @@ class ReinforcedGAT:
                 real_env_for_data_collection = self.real_env
             # real_env_for_data_collection = self.real_env
 
-        real_Ts = collect_gym_trajectories(env=real_env_for_data_collection,
+        real_Ts, real_Rs, real_Cs = collect_gym_trajectories(env=real_env_for_data_collection,
                                            policy=self.target_policy,
                                            limit_trans_count=int(self.real_trans),
                                            num=None,
                                            add_noise=0.0,
                                            deterministic=False,
+                                           collect_rew=True,
+                                           constrained=constrained
                                            )
+        real_Rs = [np.sum(np.array(real_Rs[z][1:])) for z in range(len(real_Rs))]
+        self.avg_real_traj_rewards = np.average(real_Rs)
+        self.max_real_traj_rewards = np.max(real_Rs)
+
+        real_Cs = [np.sum(np.array(real_Cs[z][1:])) for z in range(len(real_Cs))]
+        self.avg_real_traj_costs = np.average(real_Cs)
+        self.max_real_traj_costs = np.max(real_Cs)
 
         self.avg_real_traj_length = [np.average([len(real_Ts[z]) for z in range(len(real_Ts))])]
         self.max_real_traj_length = [np.max([len(real_Ts[z]) for z in range(len(real_Ts))])]
@@ -1262,6 +1271,10 @@ class ReinforcedGAT:
         print('LENGTH OF FIRST TRAJECTORY : ', len(real_Ts[0]))
         print('AVERAGE LENGTH OF TRAJECTORY : ', self.avg_real_traj_length)
         print('MAX LENGTH OF TRAJECTORY : ', self.max_real_traj_length)
+        print('AVERAGE REWARDS : ', self.avg_real_traj_rewards)
+        print('MAX REWARDS : ', self.max_real_traj_rewards)
+        print('AVERAGE COSTS : ', self.avg_real_traj_costs)
+        print('MAX COSTS : ', self.max_real_traj_costs)
 
         # # with noise
         # real_Ts_with_noise = collect_gym_trajectories(env=real_env_for_data_collection,
@@ -1304,6 +1317,7 @@ class ReinforcedGAT:
         self.real_X_list = X_list
         self.real_Y_list = Y_list
 
+        return real_Rs, real_Cs
 
     def train_discriminator(self,
                             iter_step,
@@ -1327,14 +1341,6 @@ class ReinforcedGAT:
         X_list = []  # previous states + action + next state
         Y_list = []  # label for the trajectory : real:[1] / fake:[0]
 
-        # Lists for training the s,a discriminator 
-        X_sa_list = []
-        Y_sa_list = []
-        
-        # Add all terms except last (corresponding to s') for each term in list
-        X_sa_list.extend([x[:-1] for x in self.real_X_list])
-        Y_sa_list.extend(self.real_Y_list)
-        
         ######### COLLECT REAL TRAJECTORIES ###################
         # load the collected real trajectories
         X_list.extend(self.real_X_list)
@@ -1346,8 +1352,7 @@ class ReinforcedGAT:
             X_list_indices = random.sample(np.arange(len(X_list)).tolist(), k=self.single_batch_size)
             X_list = [X_list[i] for i in X_list_indices]
             Y_list = [Y_list[i] for i in X_list_indices]
-            X_sa_list = [X_sa_list[i] for i in X_list_indices]
-            Y_sa_list = [Y_sa_list[i] for i in X_list_indices]
+
 
         print('Real data trajectories count : ', len(Y_list))
 
@@ -1403,8 +1408,6 @@ class ReinforcedGAT:
         # unpack trajectories and create the dataset to train discriminator
 
         X_list_fake, Y_list_fake = [], []
-        X_sa_list_fake = [] 
-
 
         for T in fake_Ts: # For each trajectory:
             for i in range(len(T) - self.frames):
@@ -1417,32 +1420,24 @@ class ReinforcedGAT:
 
                 # Append action a_t
                 # X = np.append(X, T[i + self.frames - 1][1])
-                
-                X_sa_list_fake.append(X)
-                
+
                 # Append next state S_{t+1}
                 X = np.append(X, T[i + self.frames][0])
                 X_list_fake.append(X)
 
                 # Append label = fake
                 Y_list_fake.append(np.array([0.0]))
-        
+
         if single_batch_test:
             assert len(X_list) >= self.single_batch_size, "Using too less data"
             X_list_indices = random.sample(np.arange(len(X_list_fake)).tolist(), k=self.single_batch_size)
             X_list_fake = [X_list_fake[i] for i in X_list_indices]
             Y_list_fake = [Y_list_fake[i] for i in X_list_indices]
-            X_sa_list_fake = [X_sa_list_fake[i] for i in X_list_indices]
-            Y_sa_list_fake = [Y_list_fake[i] for i in X_list_indices]
             X_list.extend(X_list_fake)
             Y_list.extend(Y_list_fake)
-            X_sa_list.extend(X_sa_list_fake)
-            Y_sa_list.extend(Y_sa_list_fake)
         else:
             X_list.extend(X_list_fake)
             Y_list.extend(Y_list_fake)
-            X_sa_list.extend(X_sa_list_fake)
-            Y_sa_list.extend(Y_sa_list_fake)
 
         # # testing adding noise to the discriminator
         # if iter_step == 0:
@@ -1454,8 +1449,7 @@ class ReinforcedGAT:
 
         print('STARTING TO TRAIN THE DISCRIMINATOR')
 
-        if single_batch_test:
-            print('Num disc updates : ', len(Y_list)/self.single_batch_size)
+        print('Num disc updates : ', len(Y_list)/self.single_batch_size)
 
         self.discriminator_norm_x, _ = train_model_es(
             model=self.discriminator,
@@ -1480,30 +1474,6 @@ class ReinforcedGAT:
         # set discriminator to eval mode after training
         self.discriminator = self.discriminator.eval()
         self.discriminator = self.discriminator.to(self.device)
-        
-        self.discriminator_sa_norm_x, _ = train_model_es(
-            model=self.discriminator_sa,
-            x_list=X_sa_list,
-            y_list=Y_sa_list,
-            optimizer=self.optimizer_sa,
-            criterion=self.discriminator_sa_loss,
-            problem='classification',
-            max_epochs=num_epochs if not single_batch_test else 1,
-            checkpoint_name=self.expt_label,
-            num_cores=self.num_cores,
-            label=str(grounding_step)+'_'+str(iter_step)+'_sa',
-            device=self.device,
-            normalize_data=True,
-            use_es=False,
-            dump_loss_to_file=debug_discriminator,
-            expt_path=self.expt_path,
-            compute_grad_penalty=compute_grad_penalty,
-            batch_size=int(len(Y_list)/nminibatches) if not single_batch_test else self.single_batch_size,
-        )
-      
-        # set discriminator s,a to eval mode after training
-        self.discriminator_sa = self.discriminator_sa.eval()
-        self.discriminator_sa = self.discriminator_sa.to(self.device)
         
     def save_target_policy(self, iter_num=None):
         """Saves target policy"""

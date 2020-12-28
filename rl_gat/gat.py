@@ -378,6 +378,7 @@ def collect_gym_trajectories(
         add_noise=0.0,
         deterministic=True,
         limit_trans_count=None,
+        constrained = False
         ):
     """Generates trajectories from an environment
 
@@ -392,6 +393,8 @@ def collect_gym_trajectories(
     Ts = [] # Initialize list of trajectories
     if collect_rew:
         Rs = [] # Initialize list of rewards
+    if constrained:
+        Cs = [] # Initialize list of costs
 
     num_env = env.num_envs # Number of parallel envs to use
     action_lim = abs(env.action_space.high)
@@ -409,6 +412,8 @@ def collect_gym_trajectories(
         if collect_rew:
             R = [[] for i in range(num_env)]
             rew = None
+            C = [[] for i in range(num_env)]
+            cost = None
 
         # Reset all environments
         obs = env.reset()
@@ -425,12 +430,19 @@ def collect_gym_trajectories(
                         # Append state-action pair
                         T[e].append((obs[e], action[e]))
                         if collect_rew: R[e].append(rew)
+                        if constrained: C[e].append(cost)
                     else:
                         # Append terminal state
                         T[e].append((obs[e], None))
                         if collect_rew: R[e].append(rew)
+                        if constrained: C[e].append(cost)
                         finished[e] = True
-            obs, rew, done, _ = env.step(action)
+            obs, rew, done, info = env.step(action)
+            if constrained:
+                cost = info[0].get('cost', 0)
+            else:
+                cost = 0
+
             time_steps += 1
             if limit_trans_count is not None: transition_count+=num_env
             # break if policy is running for long on env
@@ -439,13 +451,14 @@ def collect_gym_trajectories(
 
         Ts.extend(T)
         if collect_rew: Rs.extend(R)
+        if constrained: Cs.extend(C)
 
         if limit_trans_count is not None:
             if transition_count>limit_trans_count:
                 print('~~ STOPPING COLLECTING EXPERIENCE ~~')
                 break
 
-    if collect_rew: return Ts, Rs
+    if collect_rew: return Ts, Rs, Cs
     return Ts
 
 
