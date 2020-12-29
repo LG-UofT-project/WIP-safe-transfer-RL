@@ -92,17 +92,21 @@ def main():
 
     # Set default parameters to follow run_experiments.sh
     parser = argparse.ArgumentParser(description='Reinforced Grounded Action Transformation')
-    parser.add_argument('--target_policy_algo', default="TRPO_lagrangian", type=str, help="name in str of the agent policy training algorithm")
+    parser.add_argument('--target_policy_algo', default="TRPO", type=str, help="name in str of the agent policy training algorithm")
+    # TRPO_lagrangian
     parser.add_argument('--action_tf_policy_algo', default="PPO2", type=str, help="name in str of the Action Transformer policy training algorithm")
     parser.add_argument('--load_policy_path', default=None, help="relative path of initial policy trained in sim")
     parser.add_argument('--alpha', default=1.0, type=float, help="Deprecated feature. Ignore")
     parser.add_argument('--beta', default=1.0, type=float, help="Deprecated feature. Ignore")
     parser.add_argument('--n_trainsteps_target_policy', default=100000, type=int, help="Number of time steps to train the agent policy in the grounded environment")
-    # 1e8 for doggo, 1e7 for else
+    # 1M in GARAT paper? 1e8 for doggo, 1e7 for else
     parser.add_argument('--n_trainsteps_action_tf_policy', default=1000000, type=int, help="Timesteps to train the Action Transformer policy in the ATPEnvironment")
+    # Depreciated; gsim_trans*generator_epochs if not single_batch_test else 5000
     parser.add_argument('--num_cores', default=1, type=int, help="Number of threads to use while collecting real world experience") # was 10
-    parser.add_argument('--sim_env', default='Safexp-PointGoal1-v0', help="Name of the simulator environment (Unmodified)")
-    parser.add_argument('--real_env', default='Safexp-PointGoal2-v0', help="Name of the Real World environment (Modified)")
+    parser.add_argument('--sim_env', default='InvertedPendulum-v2', help="Name of the simulator environment (Unmodified)")
+    # Safexp-PointGoal1-v0
+    parser.add_argument('--real_env', default='InvertedPendulumModified-v2', help="Name of the Real World environment (Modified)")
+    # InvertedPendulumModified
     parser.add_argument('--n_frames', default=1, type=int, help="Number of previous frames observed by discriminator")
     parser.add_argument('--expt_number', default=1, type=int, help="Expt. number to keep track of multiple experiments")
     parser.add_argument('--n_grounding_steps', default=1, type=int, help="Number of grounding steps. (Outerloop of algorithm ) ")
@@ -112,6 +116,7 @@ def main():
     parser.add_argument('--real_trajs', default=1000, type=int, help="Set max amount of real TRAJECTORIES used")
     parser.add_argument('--sim_trajs', default=1000, type=int, help="Set max amount of sim TRAJECTORIES used")
     parser.add_argument('--real_trans', default=1024, type=int, help="amount of real world transitions used")
+    # Actual amount of transitions can be bigger than this number, since this waits for the end of episode.
     parser.add_argument('--gsim_trans', default=1024, type=int, help="amount of simulator transitions used")
     parser.add_argument('--debug', action='store_true', help="DEPRECATED")
     parser.add_argument('--eval', action='store_false', help="set to true to evaluate the agent policy in the real environment, after training in grounded environment")
@@ -142,6 +147,7 @@ def main():
     parser.add_argument('--noptepochs', default=1, type=int, help="Number of optimization epochs performed per minibatch by the PPO algorithm to update the action transformer policy")
     parser.add_argument('--deterministic', default=0, type=int, help="set to 0 to use the deterministic action transformer policy in the grounded environment")
     parser.add_argument('--single_batch_size', default=512, type=int, help="batch size for the GARAT update")
+    parser.add_argument('--double_discriminators', default="store_true", help="set to use match conditional ditribution by two discriminators")
 
 
     args = parser.parse_args()
@@ -238,12 +244,19 @@ def main():
                                    atp_lr=args.atp_lr,
                                    nminibatches=args.nminibatches,
                                    noptepochs=args.noptepochs,
+                                   double_discriminators=args.double_discriminators,
                                    )
 
     for _ in range(args.n_grounding_steps-start_grouding_step):
         grounding_step += 1
 
-        gatworld.collect_experience_from_real_env()
+        real_Rs, real_Cs = gatworld.collect_experience_from_real_env(constrained = constrained)
+        with open(expt_path + '/real_rewards' + str(grounding_step) + '.txt', 'w') as fr:
+            np.savetxt(fr,real_Rs)
+            fr.close()
+        with open(expt_path + '/real_costs' + str(grounding_step) + '.txt', 'w') as fc:
+            np.savetxt(fc,real_Cs)
+            fc.close()
 
         cprint('~~ RESETTING DISCRIMINATOR AND ATP POLICY ~~', 'yellow')
         gatworld._init_rgat_models(algo=args.action_tf_policy_algo,
@@ -255,6 +268,7 @@ def main():
                                    atp_lr=args.atp_lr,
                                    nminibatches=args.nminibatches,
                                    noptepochs=args.noptepochs,
+                                   double_discriminators=args.double_discriminators,
                                    )
 
         # ground the environment

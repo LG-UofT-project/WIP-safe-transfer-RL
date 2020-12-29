@@ -239,10 +239,12 @@ class TRPO_lagrangian(ActorCriticRLModel):
                     self.compute_losses = tf_util.function([observation, old_policy.obs_ph, action, atarg, catarg], losses)
                     self.compute_fvp = tf_util.function([flat_tangent, observation, old_policy.obs_ph, action, atarg, catarg],
                                                         fvp) # Why need all inputs? Might for implementation easiness
-                    self.compute_vflossandgrad = tf_util.function([observation, old_policy.obs_ph, ret],
-                                                                  tf_util.flatgrad(vferr, vf_var_list)) # Why need old_policy.obs_ph? Doesn't seem to be used
-                    self.compute_vcflossandgrad = tf_util.function([observation, old_policy.obs_ph, cret],
-                                                                  tf_util.flatgrad(vcerr, vcf_var_list))
+                    # self.compute_vflossandgrad = tf_util.function([observation, old_policy.obs_ph, ret],
+                    #                                               tf_util.flatgrad(vferr, vf_var_list)) # Why need old_policy.obs_ph? Doesn't seem to be used
+                    # self.compute_vcflossandgrad = tf_util.function([observation, old_policy.obs_ph, cret],
+                    #                                               tf_util.flatgrad(vcerr, vcf_var_list))
+                    self.compute_vflossandgrad = tf_util.function([observation, old_policy.obs_ph, ret, cret],
+                                                                  [tf_util.flatgrad(vferr, vf_var_list), tf_util.flatgrad(vcerr, vcf_var_list)])
                     self.compute_lagrangiangrad = tf_util.function([cur_cost_ph],
                                                                    tf_util.flatgrad(penalty_loss, [penalty_param]))
 
@@ -492,15 +494,25 @@ class TRPO_lagrangian(ActorCriticRLModel):
 
                         with self.timed("vf and vcf"):
                             for _ in range(self.vf_iters):
+                                # Original stable-baselines
                                 # NOTE: for recurrent policies, use shuffle=False?
                                 for (mbob, mbret, mbcret) in dataset.iterbatches((seg["observations"], seg["tdlamret"], seg["tdlamcost"]),
                                                                          include_final_partial_batch=False,
                                                                          batch_size=128,
                                                                          shuffle=True):
-                                    grad = self.allmean(self.compute_vflossandgrad(mbob, mbob, mbret, sess=self.sess))
-                                    self.vfadam.update(grad, self.vf_stepsize)
-                                    grad = self.allmean(self.compute_vcflossandgrad(mbob, mbob, mbcret, sess=self.sess))
-                                    self.vcadam.update(grad, self.vf_stepsize)
+                                    [grad_vf, grad_vcf] = self.compute_vflossandgrad(seg["observations"], seg["observations"], seg["tdlamret"],
+                                                               seg["tdlamcost"], sess=self.sess)
+                                    grad_vf = self.allmean(grad_vf)
+                                    grad_vcf = self.allmean(grad_vcf)
+                                    self.vfadam.update(grad_vf, self.vf_stepsize)
+                                    self.vcadam.update(grad_vcf, self.vf_stepsize)
+                                # # Safety-starter-agents
+                                # [grad_vf, grad_vcf] = self.compute_vflossandgrad(seg["observations"], seg["observations"], seg["tdlamret"],
+                                #                            seg["tdlamcost"], sess=self.sess)
+                                # grad_vf = self.allmean(grad_vf)
+                                # grad_vcf = self.allmean(grad_vcf)
+                                # self.vfadam.update(grad_vf, self.vf_stepsize)
+                                # self.vcadam.update(grad_vcf, self.vf_stepsize)
 
                     # Stop training early (triggered by the callback)
                     if not seg.get('continue_training', True):  # pytype: disable=attribute-error
