@@ -17,11 +17,11 @@ import numpy as np
 import yaml, shutil, os
 from scripts.utils import MujocoNormalized
 
-ALGO = TRPO_lagrangian
+ALGO = TRPO
 # set the environment here :
-ENV_NAME = 'Safexp-PointGoal1slippery-v0'
+ENV_NAME = 'InvertedPendulumModified-v2'
 # set this to the parent environment
-PARAMS_ENV = 'Safexp-PointGoal1-v0'
+PARAMS_ENV = 'InvertedPendulum-v2'
 TIME_STEPS = 10000000 # 10000000, 2000000
 NOISE_VALUE = 0.0
 SAVE_BEST_FOR_20 = False

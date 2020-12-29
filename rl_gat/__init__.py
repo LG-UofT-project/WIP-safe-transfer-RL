@@ -146,7 +146,7 @@ register(
 
 register(
     id='InvertedPendulumModified-v2',
-    entry_point='rl_gat.envs:InvertedPendulumModifiedEnv',
+    entry_point='rl_gat.envs.mujoco:InvertedPendulumModifiedEnv',
     max_episode_steps=1000,
     reward_threshold=1000.0,
     )
