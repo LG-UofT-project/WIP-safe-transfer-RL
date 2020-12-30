@@ -842,7 +842,7 @@ class ReinforcedGAT:
 
                 args = args['TRPO_lagrangian'][self.env_name]
 
-                self.target_policy = TRPO_lagrangian(
+                self.target_policy = TRPO_lagrangian.load(
                     load_policy,
                     # env=DummyVecEnv([lambda:env]),
                     verbose=1,
