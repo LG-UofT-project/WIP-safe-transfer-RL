@@ -95,18 +95,18 @@ def main():
     parser.add_argument('--target_policy_algo', default="TRPO", type=str, help="name in str of the agent policy training algorithm")
     # TRPO_lagrangian
     parser.add_argument('--action_tf_policy_algo', default="PPO2", type=str, help="name in str of the Action Transformer policy training algorithm")
-    parser.add_argument('--load_policy_path', default=None, help="relative path of initial policy trained in sim")
+    parser.add_argument('--load_policy_path', default="data/models/TRPO_initial_policy_steps_InvertedPendulum-v2_2000000_.pkl", help="relative path of initial policy trained in sim")
     parser.add_argument('--alpha', default=1.0, type=float, help="Deprecated feature. Ignore")
     parser.add_argument('--beta', default=1.0, type=float, help="Deprecated feature. Ignore")
-    parser.add_argument('--n_trainsteps_target_policy', default=100000, type=int, help="Number of time steps to train the agent policy in the grounded environment")
+    parser.add_argument('--n_trainsteps_target_policy', default=2000000, type=int, help="Number of time steps to train the agent policy in the grounded environment")
     # 1M in GARAT paper? 1e8 for doggo, 1e7 for else
     parser.add_argument('--n_trainsteps_action_tf_policy', default=1000000, type=int, help="Timesteps to train the Action Transformer policy in the ATPEnvironment")
     # Depreciated; gsim_trans*generator_epochs if not single_batch_test else 5000
     parser.add_argument('--num_cores', default=1, type=int, help="Number of threads to use while collecting real world experience") # was 10
     parser.add_argument('--sim_env', default='InvertedPendulum-v2', help="Name of the simulator environment (Unmodified)")
-    # Safexp-PointGoal1-v0
+    #  Safexp-PointGoal1-v0
     parser.add_argument('--real_env', default='InvertedPendulumModified-v2', help="Name of the Real World environment (Modified)")
-    # InvertedPendulumModified
+    #  Safexp-PointGoal1slippery-v0
     parser.add_argument('--n_frames', default=1, type=int, help="Number of previous frames observed by discriminator")
     parser.add_argument('--expt_number', default=1, type=int, help="Expt. number to keep track of multiple experiments")
     parser.add_argument('--n_grounding_steps', default=1, type=int, help="Number of grounding steps. (Outerloop of algorithm ) ")
@@ -128,13 +128,13 @@ def main():
     parser.add_argument('--use_condor', action='store_true', help="UNUSABLE")
     parser.add_argument('--plot', action='store_false', help="visualize the action transformer policy - works well only for simple environments")
     parser.add_argument('--tensorboard', action='store_true', help="visualize training in tensorboard")
-    parser.add_argument('--save_atp', action='store_true', help="Saves the action transformer policy")
-    parser.add_argument('--save_target_policy', action='store_true', help="saves the agent policy")
+    parser.add_argument('--save_atp', action='store_false', help="Saves the action transformer policy")
+    parser.add_argument('--save_target_policy', action='store_false', help="saves the agent policy")
     parser.add_argument('--debug_discriminator', action='store_true', help="UNUSED")
     parser.add_argument('--use_eval_callback', action='store_true', help="UNUSED")
     parser.add_argument('--loss_function', default="GAIL", type=str, help="choose from the list: ['GAIL', 'WGAN', 'AIRL', 'FAIRL']")
     parser.add_argument('--reset_disc_only', action='store_true', help="UNUSED")
-    parser.add_argument('--namespace', default="wed_night", type=str, help="namespace for the experiments")
+    parser.add_argument('--namespace', default="Single_", type=str, help="namespace for the experiments")
     parser.add_argument('--dont_reset', action='store_true', help="UNUSED")
     parser.add_argument('--reset_target_policy', action='store_true', help="UNUSED")
     parser.add_argument('--randomize_target_policy', action='store_true', help="UNUSED")
@@ -361,8 +361,13 @@ def main():
             test_env = VecNormalize.load('data/models/env_stats/' + args.sim_env + '.pkl',
                                          venv=test_env)
 
-        sim_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.sim_env + '_1000000_.pkl'
-        real_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.real_env + '_1000000_.pkl'
+        sim_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.sim_env + '_10000000_.pkl'
+        real_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.real_env + '_10000000_.pkl'
+
+        # For inverted Pendulum
+        if 'InvertedPendulum' in args.load_policy_path or 'Reacher' in args.load_policy_path:
+            sim_policy = sim_policy.replace('1000000_.pkl', '2000000_.pkl')
+            real_policy = real_policy.replace('1000000_.pkl', '2000000_.pkl')
 
         if 'HalfCheetah' in args.load_policy_path or 'Reacher' in args.load_policy_path:
             sim_policy = sim_policy.replace('1000000_.pkl', '2000000_.pkl')
@@ -384,7 +389,7 @@ def main():
             algo = PPO2
         elif args.target_policy_algo == 'TRPO':
             algo = TRPO
-        elif args.target_policy_algo == 'TRPO-lagrangian':
+        elif args.target_policy_algo == 'TRPO_lagrangian':
             algo = TRPO_lagrangian
 
         val = evaluate_policy_on_env(test_env,
@@ -402,7 +407,7 @@ def main():
             algo = PPO2
         elif args.target_policy_algo == 'TRPO':
             algo = TRPO
-        elif args.target_policy_algo == 'TRPO-lagrangian':
+        elif args.target_policy_algo == 'TRPO_lagrangian':
             algo = TRPO_lagrangian
 
         val = evaluate_policy_on_env(test_env,
