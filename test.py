@@ -115,9 +115,10 @@ def main():
     parser.add_argument('--generator_epochs', default=1, type=int, help="ATP epochs per GAN iteration")
     parser.add_argument('--real_trajs', default=1000, type=int, help="Set max amount of real TRAJECTORIES used")
     parser.add_argument('--sim_trajs', default=1000, type=int, help="Set max amount of sim TRAJECTORIES used")
-    parser.add_argument('--real_trans', default=1024, type=int, help="amount of real world transitions used")
+    parser.add_argument('--real_trans', default=1000, type=int, help="amount of real world transitions used")
     # Actual amount of transitions can be bigger than this number, since this waits for the end of episode.
-    parser.add_argument('--gsim_trans', default=1024, type=int, help="amount of simulator transitions used")
+    # 1000 will be more correct parameter in GARAT paper
+    parser.add_argument('--gsim_trans', default=1000, type=int, help="amount of simulator transitions used")
     parser.add_argument('--debug', action='store_true', help="DEPRECATED")
     parser.add_argument('--eval', action='store_false', help="set to true to evaluate the agent policy in the real environment, after training in grounded environment")
     parser.add_argument('--use_cuda', action='store_true', help="DEPRECATED. Not using CUDA")
@@ -331,7 +332,7 @@ def main():
                 val = evaluate_policy_on_env(test_env,
                                        gatworld.target_policy,
                                        render=False,
-                                       iters=20,
+                                       iters=50,
                                        deterministic=True, constrained=constrained)
 
                 with open(expt_path+"/output.txt", "a") as txt_file:
@@ -340,7 +341,7 @@ def main():
                 val = evaluate_policy_on_env(test_env,
                                              gatworld.target_policy,
                                              render=False,
-                                             iters=20,
+                                             iters=50,
                                              deterministic=False,
                                              constrained=constrained)
 
@@ -364,12 +365,7 @@ def main():
         sim_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.sim_env + '_10000000_.pkl'
         real_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.real_env + '_10000000_.pkl'
 
-        # For inverted Pendulum
-        if 'InvertedPendulum' in args.load_policy_path or 'Reacher' in args.load_policy_path:
-            sim_policy = sim_policy.replace('1000000_.pkl', '2000000_.pkl')
-            real_policy = real_policy.replace('1000000_.pkl', '2000000_.pkl')
-
-        if 'HalfCheetah' in args.load_policy_path or 'Reacher' in args.load_policy_path:
+        if 'HalfCheetah' in args.load_policy_path or 'Reacher' in args.load_policy_path or 'InvertedPendulum' in args.load_policy_path :
             sim_policy = sim_policy.replace('1000000_.pkl', '2000000_.pkl')
             real_policy = real_policy.replace('1000000_.pkl', '2000000_.pkl')
 
@@ -395,7 +391,7 @@ def main():
         val = evaluate_policy_on_env(test_env,
                                      algo.load(sim_policy),
                                      render=False,
-                                     iters=10,
+                                     iters=50,
                                      deterministic=True,
                                      constrained=constrained)
         with open(expt_path + "/green_red.txt", "a") as txt_file:
@@ -413,7 +409,7 @@ def main():
         val = evaluate_policy_on_env(test_env,
                                      algo.load(real_policy),
                                      render=False,
-                                     iters=10,
+                                     iters=50,
                                      deterministic=True,
                                      constrained=constrained)
         with open(expt_path + "/green_red.txt", "a") as txt_file:
