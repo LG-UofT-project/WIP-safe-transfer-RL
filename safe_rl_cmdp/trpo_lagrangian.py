@@ -500,8 +500,7 @@ class TRPO_lagrangian(ActorCriticRLModel):
                                                                          include_final_partial_batch=False,
                                                                          batch_size=128,
                                                                          shuffle=True):
-                                    [grad_vf, grad_vcf] = self.compute_vflossandgrad(seg["observations"], seg["observations"], seg["tdlamret"],
-                                                               seg["tdlamcost"], sess=self.sess)
+                                    [grad_vf, grad_vcf] = self.compute_vflossandgrad(mbob, mbob, mbret, mbcret, sess=self.sess)
                                     grad_vf = self.allmean(grad_vf)
                                     grad_vcf = self.allmean(grad_vcf)
                                     self.vfadam.update(grad_vf, self.vf_stepsize)
