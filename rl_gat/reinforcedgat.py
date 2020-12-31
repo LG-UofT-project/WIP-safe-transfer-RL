@@ -121,9 +121,10 @@ class ATPEnv(gym.Wrapper):
                  env,
                  target_policy,
                  discriminator=None,
-                 discriminator_sa = None,
+                 discriminator_sa=None,
                  fwd_model=None,
                  disc_norm=None,
+                 disc_sa_norm=None,
                  fwd_norm=(0, 1),
                  lam=0.0,
                  beta=1.0,
@@ -155,7 +156,7 @@ class ATPEnv(gym.Wrapper):
         self.discriminator_sa = discriminator_sa
         self.fwd_model = fwd_model
         self.input_norm = disc_norm
-        self.input_sa_norm = disc_norm
+        self.input_sa_norm = disc_sa_norm
         self.fwd_norm = fwd_norm
         self.lam = lam
         self.loss = loss
@@ -261,21 +262,25 @@ class ATPEnv(gym.Wrapper):
             disc_rew = torch.nn.Sigmoid()(disc_rew_logit) # pass through sigmoid
             disc_rew = disc_rew.detach().to(self.device).numpy()
 
+            if self.discriminator_sa is not None:
+                prev_frames = self.prev_frames
+                prev_frames = apply_norm(prev_frames, self.input_sa_norm[0])
+                prev_frames = torch.tensor(prev_frames).float().to(self.device)
 
-            prev_frames = self.prev_frames
-            prev_frames = apply_norm(prev_frames, self.input_sa_norm[0])
-            prev_frames = torch.tensor(prev_frames).float().to(self.device)
-            
-            disc_sa_rew_logit = self.discriminator_sa(prev_frames)
-            disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
-            disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
+                disc_sa_rew_logit = self.discriminator_sa(prev_frames)
+                disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
+                disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
 
             # log-ify the discriminator value
             # 1e-8 term was used by faraz in the GAIfO implementation
             if self.loss == 'GAIL':
-                #disc_rew = -(np.log(1- disc_rew + 1e-8))[0]
-                disc_rew = -(np.log(disc_rew + 1e-8) + np.log(1 - disc_rew + 1e-8))[0]
-                disc_sa_rew = -(np.log(disc_sa_rew + 1e-8) + np.log(1 - disc_sa_rew + 1e-8))[0]
+                if self.discriminator_sa is not None:
+                    disc_rew = (np.log(disc_rew + 1e-8) - np.log(1 - disc_rew + 1e-8))[0]
+                    disc_sa_rew = (np.log(disc_sa_rew + 1e-8) - np.log(1 - disc_sa_rew + 1e-8))[0]
+                    # disc_rew = -(np.log(disc_rew + 1e-8) + np.log(1 - disc_rew + 1e-8))[0]
+                    # disc_sa_rew = -(np.log(disc_sa_rew + 1e-8) + np.log(1 - disc_sa_rew + 1e-8))[0]
+                else: # Single discriminator
+                    disc_rew = -(np.log(1 - disc_rew + 1e-8))[0]
             # non saturating loss function
             elif self.loss == 'NSGAIL':
                 disc_rew = np.log(disc_rew + 1e-8)[0]
@@ -331,7 +336,8 @@ class ATPEnv(gym.Wrapper):
             pickle.dump(self.Ts, open(self.expt_path+'/fake_data.p', "wb"))
 
         # TODO: we should figure out what to do with sim_reward
-        output_reward = disc_rew -disc_sa_rew #+ self.lam*sim_reward + (1-self.beta)*fwd_rew #- 0.1*np.sum(transformed_action**2)
+        output_reward = disc_rew
+        if self.discriminator_sa is not None:output_reward = disc_rew - disc_sa_rew
         return concat_sa, output_reward, sim_done, info
 
     def get_fake_trajs(self):
@@ -925,6 +931,7 @@ class ReinforcedGAT:
                                         np.ones(num_inputs)), 0)
 
         self.discriminator_sa = None
+        self.discriminator_sa_norm_x = None
         if double_discriminators:
             num_sa = self.sim_env.action_space.shape[0] * (self.frames)
             num_sa += self.sim_env.observation_space.shape[0] * (self.frames)
@@ -981,7 +988,7 @@ class ReinforcedGAT:
         self.atp_environment = ATPEnv(env=env,
                                       target_policy=self.target_policy,
                                       discriminator=self.discriminator,
-                                      discriminator_sa = self.discriminator_sa,
+                                      discriminator_sa=self.discriminator_sa,
                                       fwd_model=None,
                                       beta=1.0,
                                       device=self.device,
@@ -1214,9 +1221,9 @@ class ReinforcedGAT:
         self.atp_environment.env_method("refresh_disc",
                                         target_policy=self.target_policy,
                                         discriminator=self.discriminator,
-                                        discriminator_sa = self.discriminator_sa,
+                                        discriminator_sa=self.discriminator_sa,
                                         disc_norm=self.discriminator_norm_x,
-                                        disc_sa_norm = self.discriminator_sa_norm_x
+                                        disc_sa_norm=self.discriminator_sa_norm_x
                                         )
 
         self.atp_environment.reset()

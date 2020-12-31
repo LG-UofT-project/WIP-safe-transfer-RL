@@ -148,7 +148,7 @@ def main():
     parser.add_argument('--noptepochs', default=1, type=int, help="Number of optimization epochs performed per minibatch by the PPO algorithm to update the action transformer policy")
     parser.add_argument('--deterministic', default=0, type=int, help="set to 0 to use the deterministic action transformer policy in the grounded environment")
     parser.add_argument('--single_batch_size', default=512, type=int, help="batch size for the GARAT update")
-    parser.add_argument('--double_discriminators', default="store_true", help="set to use match conditional ditribution by two discriminators")
+    parser.add_argument('--double_discriminators', action='store_true', help="set to use match conditional ditribution by two discriminators")
 
 
     args = parser.parse_args()
