@@ -1571,5 +1571,3 @@ class ReinforcedGAT:
     def load_model(self, model_path):
         """Loads the model for the target policy from disk"""
         self.target_policy.load(model_path)
-
-
