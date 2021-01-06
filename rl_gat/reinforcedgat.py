@@ -270,6 +270,11 @@ class ATPEnv(gym.Wrapper):
                 disc_sa_rew_logit = self.discriminator_sa(prev_frames)
                 disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
                 disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
+                
+                # Share the logits similar to Eysenbach et al 2020
+                disc_rew_logit = disc_rew_logit + disc_sa_rew_logit
+                disc_rew = torch.nn.Sigmoid()(disc_rew_logit)
+                disc_rew = disc_rew.detach().to(self.device).numpy()
 
             # log-ify the discriminator value
             # 1e-8 term was used by faraz in the GAIfO implementation

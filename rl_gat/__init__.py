@@ -187,6 +187,20 @@ register(
 )
 
 register(
+    id='HalfCheetahSafe-v2',
+    entry_point='rl_gat.envs.mujoco:HalfCheetahSafeEnv',
+    max_episode_steps=1000,
+    reward_threshold=4800.0,
+)
+
+register(
+    id='HalfCheetahSafeModified-v2',
+    entry_point='rl_gat.envs.mujoco:HalfCheetahSafeModifiedEnv',
+    max_episode_steps=1000,
+    reward_threshold=4800.0,
+)
+
+register(
     id='Walker2dModified-v2',
     entry_point='rl_gat.envs:Walker2dModifiedEnv',
     max_episode_steps=1000,
