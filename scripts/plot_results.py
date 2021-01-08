@@ -106,9 +106,9 @@ def main():
         file_path_shared_double = os.path.join(atp_path_shared_double,"action_transformer_policy1_"+str(index)+".pkl")
         print(file_path_shared_double)
         action_tf_policy_list_shared_double.append(PPO2.load(file_path_shared_double))
-        file_path_airl = os.path.join(atp_path_airl,"action_transformer_policy1_"+str(index)+".pkl")
-        print(file_path_airl)
-        action_tf_policy_list_airl.append(PPO2.load(file_path_airl))           
+        #file_path_airl = os.path.join(atp_path_airl,"action_transformer_policy1_"+str(index)+".pkl")
+        #print(file_path_airl)
+        #action_tf_policy_list_airl.append(PPO2.load(file_path_airl))           
     results_dict = {}
     print('################## File loading Completed ##################')
     
@@ -122,12 +122,12 @@ def main():
 
     print('############## Begin AIRL Calculations')    
     
-    results_airl = calculate_transition_errors(sim_env, real_env, policy, action_tf_policy_list_airl)
+    #results_airl = calculate_transition_errors(sim_env, real_env, policy, action_tf_policy_list_airl)
         
     results_dict['GARAT'] = results_single
     results_dict['GARAT Double Discriminator'] = results_double
-    results_dict['GARAT Double Discriminator (Shared Network)'] = results_shared_double
-    results_dict['GARAT AIRL'] = results_airl
+    results_dict['GARAT Double Discriminator (Generator LR modifications)'] = results_shared_double
+    #results_dict['GARAT AIRL'] = results_airl
         
     plot_results(results_dict)
     

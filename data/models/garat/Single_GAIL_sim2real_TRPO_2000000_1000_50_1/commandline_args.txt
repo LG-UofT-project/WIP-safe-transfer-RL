@@ -1,1 +1,4 @@
 --double_discriminators
+--atp_lr
+1e-3
+--debug_discriminator
