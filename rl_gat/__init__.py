@@ -202,7 +202,7 @@ register(
 
 register(
     id='Walker2dModified-v2',
-    entry_point='rl_gat.envs:Walker2dModifiedEnv',
+    entry_point='rl_gat.envs.mujoco:Walker2dModifiedEnv',
     max_episode_steps=1000,
 )
 
