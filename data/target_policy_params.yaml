@@ -447,28 +447,29 @@ TRPO :
 
 SAC:
   InvertedPendulum-v2:
-    batch_size: 64
-    buffer_size: 50000
-    ent_coef: 0.2
-    learning_rate: 0.003
+    batch_size: 256 # 64
+    buffer_size: 1000000
+    ent_coef: 'auto'
+    learning_rate: 0.0003
     learning_starts: 1000
     train_freq: 1
-
+# -----------------------------------------------------
   MinitaurBulletEnv-v0:
     batch_size: 256
     buffer_size: 1000000
     ent_coef: 'auto'
     gradient_steps: 1
-    learning_rate: 0.0003
+    learning_rate: 0.0003 # linear
     learning_starts: 1000
     train_freq: 1
+    # Normalize
 
   Hopper-v2:
     batch_size: 256
     buffer_size: 1000000
-    ent_coef: 'auto'
+    ent_coef: 'auto' # 0.01
     gradient_steps: 1
-    learning_rate: 0.0003
+    learning_rate: 0.0003 # linear
     learning_starts: 1000
     train_freq: 1
 
@@ -480,42 +481,37 @@ SAC:
     learning_rate: 0.0003
     learning_starts: 10000
     train_freq: 1
+    tau: 0.01
+    gamma: 0.98
 
   Walker2d-v2:
     batch_size: 256
     buffer_size: 1000000
-    ent_coef: 0.01
+    ent_coef: 'auto' # 0.01
     gradient_steps: 1
-    learning_rate: 0.0003
+    learning_rate: 0.0003 # linear
     learning_starts: 1000
     train_freq: 1
 
-  Humanoid-v2:
-    batch_size: 64
+  AntPyBulletEnv-v0:
+    batch_size: 256
     buffer_size: 1000000
-    ent_coef: 0.01
+    ent_coef: 'auto'
     gradient_steps: 1
     learning_rate: 0.0003
-    learning_starts: 1000
+    learning_starts: 10000
     train_freq: 1
+    tau: 0.01
+    gamma: 0.98
 
-  Reacher-v2:
-    batch_size: 64
-    buffer_size: 1000000
-    ent_coef: 0.01
-    gradient_steps: 1
-    learning_rate: 0.0003
-    learning_starts: 1000
-    train_freq: 1
-
-  InvertedDoublePendulum-v2:
-    batch_size: 64
-    buffer_size: 1000000
-    ent_coef: 0.01
-    gradient_steps: 1
-    learning_rate: 0.0003
-    learning_starts: 1000
-    train_freq: 1
+  # Ant-v2:
+  #   batch_size: 256
+  #   buffer_size: 1000000
+  #   ent_coef: 'auto'
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 10000
+  #   train_freq: 1
 
   Ant-v2:
     batch_size: 256
@@ -525,6 +521,89 @@ SAC:
     learning_rate: 0.0003
     learning_starts: 10000
     train_freq: 1
+    tau: 0.01
+    gamma: 0.98
+
+# Original GARAT
+  # InvertedPendulum-v2:
+  #   batch_size: 64
+  #   buffer_size: 50000
+  #   ent_coef: 0.2
+  #   learning_rate: 0.003
+  #   learning_starts: 1000
+  #   train_freq: 1
+
+  # MinitaurBulletEnv-v0:
+  #   batch_size: 256
+  #   buffer_size: 1000000
+  #   ent_coef: 'auto'
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 1000
+  #   train_freq: 1
+
+  # Hopper-v2:
+  #   batch_size: 256
+  #   buffer_size: 1000000
+  #   ent_coef: 'auto'
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 1000
+  #   train_freq: 1
+
+  # HalfCheetah-v2:
+  #   batch_size: 256
+  #   buffer_size: 1000000
+  #   ent_coef: 'auto'
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 10000
+  #   train_freq: 1
+
+  # Walker2d-v2:
+  #   batch_size: 256
+  #   buffer_size: 1000000
+  #   ent_coef: 0.01
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 1000
+  #   train_freq: 1
+
+  # Humanoid-v2:
+  #   batch_size: 64
+  #   buffer_size: 1000000
+  #   ent_coef: 0.01
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 1000
+  #   train_freq: 1
+
+  # Reacher-v2:
+  #   batch_size: 64
+  #   buffer_size: 1000000
+  #   ent_coef: 0.01
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 1000
+  #   train_freq: 1
+
+  # InvertedDoublePendulum-v2:
+  #   batch_size: 64
+  #   buffer_size: 1000000
+  #   ent_coef: 0.01
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 1000
+  #   train_freq: 1
+
+  # Ant-v2:
+  #   batch_size: 256
+  #   buffer_size: 1000000
+  #   ent_coef: 'auto'
+  #   gradient_steps: 1
+  #   learning_rate: 0.0003
+  #   learning_starts: 10000
+  #   train_freq: 1
 
 TD3:
   Ant-v2:
@@ -618,7 +697,7 @@ TRPO_lagrangian :
     cg_iters : 10 # 20
     cost_lim : 25
     penalty_init : 1.0
-    penalty_lr : 0.05
+    penalty_lr : 0.05 # 0.05
 
   Safexp-CarGoal1-v0:
     timesteps_per_batch: 30000 #30000
@@ -635,20 +714,20 @@ TRPO_lagrangian :
     penalty_init : 1.0
     penalty_lr : 0.05
 
-  Safexp-DoggoGoal1-v0:
-    timesteps_per_batch: 60000
-    lam: 0.97
-    gamma: 0.99
-    max_kl: 0.01
-    entcoeff: 0.0
-    vf_iters : 5 # 80
-    vf_stepsize : 0.001
-    learning_rate: 0.0004
-    cg_damping : 0.1
-    cg_iters : 10 # 20
-    cost_lim : 25
-    penalty_init : 1.0
-    penalty_lr : 0.05
+  # Safexp-DoggoGoal1-v0:
+  #   timesteps_per_batch: 60000
+  #   lam: 0.97
+  #   gamma: 0.99
+  #   max_kl: 0.01
+  #   entcoeff: 0.0
+  #   vf_iters : 5 # 80
+  #   vf_stepsize : 0.001
+  #   learning_rate: 0.0004
+  #   cg_damping : 0.1
+  #   cg_iters : 10 # 20
+  #   cost_lim : 25
+  #   penalty_init : 1.0
+  #   penalty_lr : 0.05
 
 #    if robot=='Doggo':
 #        num_steps = 1e8

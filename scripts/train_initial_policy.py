@@ -15,18 +15,21 @@ from safe_rl_cmdp.utils import FeedForwardWithSafeValue, MLPWithSafeValue, CnnWi
 from stable_baselines.common.callbacks import EvalCallback
 import numpy as np
 import yaml, shutil, os
-from scripts.utils import MujocoNormalized
+from scripts.utils import MujocoNormalized, TimeFeatureWrapper
+from gym.wrappers import TimeLimit
 
-ALGO = TRPO_lagrangian
+ALGO = SAC
 # set the environment here :
-ENV_NAME = 'HalfCheetahSafe-v2'
+ENV_NAME = 'Hopper-v2' # PointGoal1Heavy, PointGoal2, InvertedPendulum-v2, InvertedPendulumModified-v2, Hopper-v2, HalfCheetah-v2, Walker2d-v2, AntPyBulletEnv-v0, MinitaurBulletEnv-v0
 # set this to the parent environment
-PARAMS_ENV = 'HalfCheetah-v2'
-TIME_STEPS = 10000000 # 10000000, 2000000
+PARAMS_ENV = 'Hopper-v2'
+TIME_STEPS = 2000000 # 1000000, 2000000
+INDICATOR = 'tuned_defaultZoo_timeLimit_1'
 NOISE_VALUE = 0.0
 SAVE_BEST_FOR_20 = False
 NORMALIZE = False
-MUJOCO_NORMALIZE = False
+MUJOCO_NORMALIZE = True # True for Minitaur
+TIMEWRAPPER = True # True for Hopper, Walker, Ant
 
 if NORMALIZE is True and MUJOCO_NORMALIZE is True:
     raise ValueError('That is not possible !')
@@ -42,7 +45,7 @@ if NOISE_VALUE == 0.0 or NOISE_VALUE == 0:
             TIME_STEPS) + "_best_.pkl"
     else:
         model_name = "data/models/" + ALGO.__name__ + "_initial_policy_steps_" + ENV_NAME + "_" + str(
-            TIME_STEPS) + "_.pkl"
+            TIME_STEPS) + "_" +  INDICATOR + "_.pkl"
 else:
     if SAVE_BEST_FOR_20:
         model_name = "data/models/" + ALGO.__name__ + "_initial_policy_steps_" + ENV_NAME + "_" + str(
@@ -162,6 +165,10 @@ def train_initial_policy(
                            norm_reward=False,
                            clip_reward=1e6,
                            )
+
+    if TIMEWRAPPER:
+        # env = TimeFeatureWrapper(env)
+        env = TimeLimit(env, 1000)
 
 
     with open('data/target_policy_params.yaml') as file:

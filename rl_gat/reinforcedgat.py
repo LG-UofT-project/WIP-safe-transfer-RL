@@ -33,6 +33,8 @@ from scripts.utils import MujocoNormalized
 import pickle
 from safe_rl_cmdp.trpo_lagrangian import TRPO_lagrangian
 from safe_rl_cmdp.utils import FeedForwardWithSafeValue, MLPWithSafeValue, CnnWithSafeValue
+from stable_baselines.sac.policies import FeedForwardPolicy as ffp_sac
+
 
 class Unbuffered(object):
    def __init__(self, stream):
@@ -113,6 +115,76 @@ class Discriminator(torch.nn.Module):
 
         return out
 
+class Shared_Discriminator(torch.nn.Module):
+    """network that defines the Discriminator"""
+    def __init__(self, n_feature, n_hidden, action_space, activations=nn.Tanh):
+        super(Shared_Discriminator, self).__init__()
+
+        # n_features: dimension of SAS
+        #-------------------- SA parts -------------------
+        n_sa_features = int((n_feature - action_space)/2) + action_space # Assume to use single frame
+        self.fc_in = nn.Linear(n_sa_features, n_hidden)
+        self.fc_h1 = nn.Linear(n_hidden, n_hidden)
+        self.fc_h2 = nn.Linear(n_hidden, n_hidden)
+        # self.fc_h3 = nn.Linear(n_hidden, n_hidden)
+        self.fc_out = nn.Linear(n_hidden, 1)
+
+        self.single_fc = nn.Linear(n_sa_features, 1)
+
+        self.activations = activations
+        self.action_space = action_space
+        self.n_sa_features = n_sa_features
+
+        torch.nn.init.xavier_uniform_(self.fc_in.weight)
+        torch.nn.init.xavier_uniform_(self.fc_h1.weight)
+        torch.nn.init.xavier_uniform_(self.fc_h2.weight)
+        torch.nn.init.xavier_uniform_(self.fc_out.weight)
+        torch.nn.init.xavier_uniform_(self.single_fc.weight)
+
+        #-------------------- SAS parts -------------------
+        self.fc_in_adv = nn.Linear(n_feature, n_hidden)
+        self.fc_h1_adv = nn.Linear(n_hidden, n_hidden)
+        self.fc_h2_adv = nn.Linear(n_hidden, n_hidden)
+        # self.fc_h3 = nn.Linear(n_hidden, n_hidden)
+        self.fc_out_adv = nn.Linear(n_hidden, 1)
+
+        self.single_fc_adv = nn.Linear(n_feature, 1)
+
+        torch.nn.init.xavier_uniform_(self.fc_in_adv.weight)
+        torch.nn.init.xavier_uniform_(self.fc_h1_adv.weight)
+        torch.nn.init.xavier_uniform_(self.fc_h2_adv.weight)
+        torch.nn.init.xavier_uniform_(self.fc_out_adv.weight)
+        torch.nn.init.xavier_uniform_(self.single_fc_adv.weight)
+
+    # pylint: disable=arguments-differ
+    def forward(self, x):
+        # x: SAS
+        #-------------------- SA parts -------------------
+        if len(x.shape) == 1:
+            x_sa = x[0:self.n_sa_features]
+        else:
+            x_sa = x[:, 0:self.n_sa_features]
+        out_sa = self.activations()(self.fc_in(x_sa))
+        out_sa = self.activations()(self.fc_h1(out_sa))
+        out_sa = self.activations()(self.fc_h2(out_sa))
+        # out_sa = self.activations()(self.fc_h3(out_sa))
+        out_sa = self.fc_out(out_sa)
+
+        skip = nn.ReLU()(self.single_fc(x_sa))
+        out_sa = out_sa+skip
+
+        #-------------------- SAS parts -------------------
+        out_sas = self.activations()(self.fc_in_adv(x))
+        out_sas = self.activations()(self.fc_h1_adv(out_sas))
+        out_sas = self.activations()(self.fc_h2_adv(out_sas))
+        out_sas = self.fc_out_adv(out_sas)
+
+        skip_sas = nn.ReLU()(self.single_fc_adv(x))
+        out_sas = out_sas+skip_sas
+
+        return [out_sa, out_sas]
+
+
 class ATPEnv(gym.Wrapper):
     """
     Defines the Action Transformer Policy's environment
@@ -136,6 +208,7 @@ class ATPEnv(gym.Wrapper):
                  frames=1,
                  data_collection_mode=False,
                  expt_path=None,
+                 shared_double=False,
                  ):
         super(ATPEnv, self).__init__(env)
         self.target_policy = target_policy
@@ -154,6 +227,7 @@ class ATPEnv(gym.Wrapper):
         self.device = device
         self.discriminator = discriminator
         self.discriminator_sa = discriminator_sa
+        self.shared_double = shared_double
         self.fwd_model = fwd_model
         self.input_norm = disc_norm
         self.input_sa_norm = disc_sa_norm
@@ -257,10 +331,15 @@ class ATPEnv(gym.Wrapper):
 
             concat_sas = apply_norm(concat_sas, self.input_norm[0])
             concat_sas = torch.tensor(concat_sas).float().to(self.device)
-            
             disc_rew_logit = self.discriminator(concat_sas)
-            disc_rew = torch.nn.Sigmoid()(disc_rew_logit) # pass through sigmoid
-            disc_rew = disc_rew.detach().to(self.device).numpy()
+            if self.shared_double:
+                disc_rew_sa = torch.nn.Sigmoid()(disc_rew_logit[0]) # pass through sigmoid
+                disc_rew_sas = torch.nn.Sigmoid()(disc_rew_logit[0] + disc_rew_logit[1]) # pass through sigmoid
+                disc_rew_sa = disc_rew_sa.detach().to(self.device).numpy()
+                disc_rew_sas = disc_rew_sas.detach().to(self.device).numpy()
+            else: # Original
+                disc_rew = torch.nn.Sigmoid()(disc_rew_logit) # pass through sigmoid
+                disc_rew = disc_rew.detach().to(self.device).numpy()
 
             if self.discriminator_sa is not None:
                 prev_frames = self.prev_frames
@@ -270,18 +349,21 @@ class ATPEnv(gym.Wrapper):
                 disc_sa_rew_logit = self.discriminator_sa(prev_frames)
                 disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
                 disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
-                
 
             # log-ify the discriminator value
             # 1e-8 term was used by faraz in the GAIfO implementation
             if self.loss == 'GAIL':
+                if self.shared_double:
+                    disc_rew = (np.log(disc_rew_sas + 1e-8) - np.log(1 - disc_rew_sas + 1e-8))[0] \
+                               - (np.log(disc_rew_sa + 1e-8) - np.log(1 - disc_rew_sa + 1e-8))[0]
+                else:  # Single discriminator
+                    disc_rew = -(np.log(1 - disc_rew + 1e-8))[0]
+
                 if self.discriminator_sa is not None:
                     disc_rew = (np.log(disc_rew + 1e-8) - np.log(1 - disc_rew + 1e-8))[0]
                     disc_sa_rew = (np.log(disc_sa_rew + 1e-8) - np.log(1 - disc_sa_rew + 1e-8))[0]
                     # disc_rew = -(np.log(disc_rew + 1e-8) + np.log(1 - disc_rew + 1e-8))[0]
                     # disc_sa_rew = -(np.log(disc_sa_rew + 1e-8) + np.log(1 - disc_sa_rew + 1e-8))[0]
-                else: # Single discriminator
-                    disc_rew = -(np.log(1 - disc_rew + 1e-8))[0]
             # non saturating loss function
             elif self.loss == 'NSGAIL':
                 disc_rew = np.log(disc_rew + 1e-8)[0]
@@ -567,6 +649,7 @@ class ReinforcedGAT:
                  tensorboard=False,
                  atp_loss_function='GAIL',
                  single_batch_size=None,
+                 shared_double=False,
                  ):
 
         self.single_batch_size=single_batch_size
@@ -639,6 +722,7 @@ class ReinforcedGAT:
         self.fwd_X_list, self.fwd_Y_list = [], []
 
         # self.use_wgan = True if atp_loss_function == 'WGAN' else False
+        self.shared_double = shared_double
 
     def _randomize_target_policy(self, algo, env=None):
 
@@ -759,6 +843,29 @@ class ReinforcedGAT:
                     penalty_init=args['penalty_init'],
                     penalty_lr=args['penalty_lr']
                 )
+            elif algo == "SAC":
+                print('Using SAC as the Target Policy Algo ')
+                print('using 256 node architecture as in the paper')
+
+                args = args['SAC'][self.env_name]
+
+                class CustomPolicy(ffp_sac):
+                    def __init__(self, *args, **kwargs):
+                        super(CustomPolicy, self).__init__(*args, **kwargs,
+                                                           feature_extraction="mlp", layers=[256, 256])
+
+                self.target_policy = SAC(
+                    CustomPolicy,
+                    env,
+                    verbose=1,
+                    tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
+                    batch_size=args['batch_size'],
+                    buffer_size=args['buffer_size'],
+                    ent_coef=args['ent_coef'],
+                    learning_starts=args['learning_starts'],
+                    learning_rate=args['learning_rate'],
+                    train_freq=args['train_freq'],
+                )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported")
         else:
@@ -776,7 +883,7 @@ class ReinforcedGAT:
                 self.target_policy = SAC.load(
                     load_policy,
                     # env=DummyVecEnv([lambda: env]),
-                    # tensorboard_log='data/TBlogs/'+self.env_name,
+                    tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
                     verbose=1,
                     batch_size=args['batch_size'],
                     buffer_size=args['buffer_size'],
@@ -898,6 +1005,19 @@ class ReinforcedGAT:
         else: entropy = 0.0
         return torch.mean(gen_exp_loss) - entropy
 
+    # def logit_bernoulli_entropy_double(self, logits):
+    #     ent = (1.-torch.nn.Sigmoid()(logits))*logits - torch.nn.LogSigmoid()(logits)
+    #     return ent
+
+    def bce_with_entropy_loss_double(self, output, target): # output = [out_sa, out_sas]
+        ent_coeff = 0.00 # not using entropy
+        # ---------- SA parts--------
+        gen_exp_loss_sa = torch.nn.BCEWithLogitsLoss()(output[0], target)
+        # ---------- SAS parts--------
+        gen_exp_loss_sas = torch.nn.BCEWithLogitsLoss()(output[0] + output[1], target)
+
+        return torch.mean(gen_exp_loss_sa) + torch.mean(gen_exp_loss_sas)
+
     def _init_rgat_models(self, algo="TRPO",
                           ent_coeff=None,
                           max_kl=None,
@@ -922,12 +1042,18 @@ class ReinforcedGAT:
         if atp_loss_function == 'WGAN':
             cprint('USING WGAN FORMULATION. No output activation', 'red', 'on_yellow')
 
-        self.discriminator = Discriminator(
-            n_feature=num_inputs,
-            n_hidden=64,
-            activations=nn.ReLU,
-            action_space=self.sim_env.action_space.shape[0]).to(self.device)
-
+        if self.shared_double:
+            self.discriminator = Shared_Discriminator(
+                n_feature=num_inputs,
+                n_hidden=64,
+                activations=nn.ReLU,
+                action_space=self.sim_env.action_space.shape[0]).to(self.device)
+        else:# Original
+            self.discriminator = Discriminator(
+                n_feature=num_inputs,
+                n_hidden=64,
+                activations=nn.ReLU,
+                action_space=self.sim_env.action_space.shape[0]).to(self.device)
         self.discriminator_norm_x = ((np.zeros(num_inputs),
                                         np.ones(num_inputs)), 0)
 
@@ -951,7 +1077,11 @@ class ReinforcedGAT:
             if double_discriminators: self.discriminator_sa_loss = self.wgan_loss
         else:
             # self.discriminator_loss = torch.nn.BCELoss()
-            self.discriminator_loss = self.bce_with_entropy_loss
+            if self.shared_double:
+                self.discriminator_loss = self.bce_with_entropy_loss_double
+            else:
+                self.discriminator_loss = self.bce_with_entropy_loss # Original
+
             if double_discriminators: self.discriminator_sa_loss = self.bce_with_entropy_loss
             # self.discriminator_loss = torch.nn.BCEWithLogitsLoss()
             # self.discriminator_loss = torch.nn.MSELoss() # if using lsgan
@@ -999,6 +1129,7 @@ class ReinforcedGAT:
                                       frames=self.frames,
                                       data_collection_mode=False,
                                       expt_path=self.expt_path,
+                                      shared_double=self.shared_double,
                                       )
 
         self.atp_environment = DummyVecEnv([lambda : self.atp_environment])
@@ -1511,6 +1642,7 @@ class ReinforcedGAT:
             expt_path=self.expt_path,
             compute_grad_penalty=compute_grad_penalty,
             batch_size=int(len(Y_list)/nminibatches) if not single_batch_test else self.single_batch_size,
+            shared_double = self.shared_double,
         )
 
         # set discriminator to eval mode after training
@@ -1536,6 +1668,7 @@ class ReinforcedGAT:
                 expt_path=self.expt_path,
                 compute_grad_penalty=compute_grad_penalty,
                 batch_size=int(len(Y_sa_list)/nminibatches) if not single_batch_test else self.single_batch_size,
+                shared_double=self.shared_double,
             )
 
             # set discriminator s,a to eval mode after training

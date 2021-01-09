@@ -510,7 +510,7 @@ class BalancedBatchSampler(torch.utils.data.sampler.Sampler):
     def __len__(self):
         return self.balanced_max * len(self.keys)
 
-def compute_grad_pen(x_data, y_data, model):
+def compute_grad_pen(x_data, y_data, model, shared_double):
 
     expert_data = x_data[(y_data.squeeze() == 1.0)]
     policy_data = x_data[(y_data.squeeze() == 0.0)]
@@ -520,19 +520,67 @@ def compute_grad_pen(x_data, y_data, model):
     mixup_data.requires_grad = True
 
     disc = model(mixup_data)
-    ones = torch.ones(disc.size()).to('cpu')
+    if shared_double:
+        # --------------SA part---------------------
+        ones = torch.ones(disc[0].size()).to('cpu')
 
-    grad = autograd.grad(
-        outputs=disc,
-        inputs=mixup_data,
-        grad_outputs=ones,
-        create_graph=True,
-        retain_graph=True,
-        only_inputs=True)[0]
+        grad_sa = autograd.grad(
+            outputs=disc[0],
+            inputs=mixup_data,
+            grad_outputs=ones,
+            create_graph=True,
+            retain_graph=True,
+            only_inputs=True)[0]
 
-    grad_pen = 10 * (grad.norm(2, dim=1) - 1).pow(2).mean()
+        grad_pen = 10 * (grad_sa.norm(2, dim=1) - 1).pow(2).mean()
+        # --------------SAS part---------------------
+        ones = torch.ones(disc[1].size()).to('cpu')
+
+        grad_sas = autograd.grad(
+            outputs=disc[1],
+            inputs=mixup_data,
+            grad_outputs=ones,
+            create_graph=True,
+            retain_graph=True,
+            only_inputs=True)[0]
+
+        grad_pen += 10 * (grad_sas.norm(2, dim=1) - 1).pow(2).mean()
+    else:# Original
+        ones = torch.ones(disc.size()).to('cpu')
+
+        grad = autograd.grad(
+            outputs=disc,
+            inputs=mixup_data,
+            grad_outputs=ones,
+            create_graph=True,
+            retain_graph=True,
+            only_inputs=True)[0]
+
+        grad_pen = 10 * (grad.norm(2, dim=1) - 1).pow(2).mean()
     return grad_pen
 
+# def compute_grad_pen(x_data, y_data, model):
+#
+#     expert_data = x_data[(y_data.squeeze() == 1.0)]
+#     policy_data = x_data[(y_data.squeeze() == 0.0)]
+#
+#     alpha = torch.randn_like(expert_data).to('cpu')
+#     mixup_data = alpha * expert_data + (1 - alpha) * policy_data
+#     mixup_data.requires_grad = True
+#
+#     disc = model(mixup_data)
+#     ones = torch.ones(disc.size()).to('cpu')
+#
+#     grad = autograd.grad(
+#         outputs=disc,
+#         inputs=mixup_data,
+#         grad_outputs=ones,
+#         create_graph=True,
+#         retain_graph=True,
+#         only_inputs=True)[0]
+#
+#     grad_pen = 10 * (grad.norm(2, dim=1) - 1).pow(2).mean()
+#     return grad_pen
 
 def train_model_es(model,
                    x_list,
@@ -554,6 +602,7 @@ def train_model_es(model,
                    dump_loss_to_file=True,
                    expt_path=None,
                    compute_grad_penalty=True,
+                   shared_double=False,
                    ):
     """Trains a model from given labels with early stopping
 
@@ -692,7 +741,7 @@ def train_model_es(model,
             loss = criterion(y_pred, y_batch)
 
             if compute_grad_penalty:
-                grad_pen = compute_grad_pen(x_batch, y_batch, model)
+                grad_pen = compute_grad_pen(x_batch, y_batch, model, shared_double)
                 loss = loss + grad_pen
 
             print('\repoch: '+str(epoch)+ ' loss: '+str(loss.item()), end='')
