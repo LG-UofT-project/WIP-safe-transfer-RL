@@ -97,7 +97,7 @@ register(
 
 register(
     id='HopperModified-v2',
-    entry_point='rl_gat.envs:HopperModifiedEnv',
+    entry_point='rl_gat.envs.mujoco:HopperModifiedEnv',
     max_episode_steps=1000,
     reward_threshold=3800.0,
     )

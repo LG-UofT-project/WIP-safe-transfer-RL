@@ -153,6 +153,7 @@ def main():
     parser.add_argument('--single_batch_size', default=512, type=int, help="batch size for the GARAT update")
     parser.add_argument('--double_discriminators', action='store_true', help="set to use separate double discriminators")
     parser.add_argument('--shared_double_discriminators', action='store_false', help="set to use shared double discriminators")
+    parser.add_argument('--use_darc', action='store_false', help="set to use reward shaping mechanism from DARC")
 
     args = parser.parse_args()
 
