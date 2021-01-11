@@ -111,7 +111,7 @@ register(
 
 register(
     id='HopperFrictionModified-v2',
-    entry_point='rl_gat.envs:HopperFrictionModifiedEnv',
+    entry_point='rl_gat.envs.mujoco:HopperFrictionModifiedEnv',
     max_episode_steps=1000,
     reward_threshold=3800.0,
     )
