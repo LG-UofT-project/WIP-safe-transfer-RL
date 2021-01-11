@@ -13,6 +13,7 @@ from scripts.utils import MujocoNormalized
 from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
 import torch
 import random
+from gym.wrappers import TimeLimit
 torch.backends.cudnn.deterministic = True
 
 class Unbuffered(object):
@@ -154,6 +155,8 @@ def main():
     parser.add_argument('--double_discriminators', action='store_true', help="set to use separate double discriminators")
     parser.add_argument('--shared_double_discriminators', action='store_false', help="set to use shared double discriminators")
     parser.add_argument('--use_darc', action='store_false', help="set to use reward shaping mechanism from DARC")
+    parser.add_argument('--mujoco_norm', action='store_false', help="normalize environment")
+    parser.add_argument('--time_limit', action='store_false', help="set maximum episode length")
 
     args = parser.parse_args()
 
@@ -166,6 +169,8 @@ def main():
 
     # make dummy gym environment
     dummy_env = gym.make(args.real_env)
+    if args.mujoco_norm: dummy_env = MujocoNormalized(dummy_env)
+    if args.time_limit: dummy_env = TimeLimit(dummy_env)
 
     if args.dont_reset is True and args.reset_disc_only is True:
         raise ValueError('Cannot have both args dont_reset and reset_disc_only. Choose one.')
@@ -213,6 +218,8 @@ def main():
         atp_loss_function=args.loss_function,
         single_batch_size=None if args.single_batch_size == 0 else args.single_batch_size,
         shared_double=args.shared_double_discriminators,
+        mujoco_norm=args.mujoco_norm,
+        time_limit=args.time_limit,
     )
 
     # checkpointing logic ~~ necessary when deploying script on Condor cluster
@@ -329,12 +336,17 @@ def main():
         if args.eval:
             cprint('Evaluating target policy in environment .. ', 'red', 'on_blue')
             test_env = gym.make(args.real_env)
-            if 'mujoco_norm' in args.load_policy_path:
-                test_env = MujocoNormalized(test_env)
-            elif 'normalized' in args.load_policy_path:
-                test_env = DummyVecEnv([lambda: test_env])
-                test_env = VecNormalize.load('data/models/env_stats/' + args.sim_env + '.pkl',
-                                        venv=test_env)
+            if args.mujoco_norm: test_env = MujocoNormalized(test_env)
+            if args.time_limit: test_env = TimeLimit(test_env)
+
+            ##### Original
+            # if 'mujoco_norm' in args.load_policy_path:
+            #     test_env = MujocoNormalized(test_env)
+            # elif 'normalized' in args.load_policy_path:
+            #     test_env = DummyVecEnv([lambda: test_env])
+            #     test_env = VecNormalize.load('data/models/env_stats/' + args.sim_env + '.pkl',
+            #                             venv=test_env)
+
             # evaluate on the real world.
             try:
                 val = evaluate_policy_on_env(test_env,
@@ -363,12 +375,16 @@ def main():
         # green line
         cprint('**~~vv^^ GETTING GREEN AND RED LINES ^^vv~~**', 'red','on_green')
         test_env = gym.make(args.real_env)
-        if 'mujoco_norm' in args.load_policy_path:
-            test_env = MujocoNormalized(test_env)
-        elif 'normalized' in args.load_policy_path:
-            test_env = DummyVecEnv([lambda: test_env])
-            test_env = VecNormalize.load('data/models/env_stats/' + args.sim_env + '.pkl',
-                                         venv=test_env)
+        if args.mujoco_norm: test_env = MujocoNormalized(test_env)
+        if args.time_limit: test_env = TimeLimit(test_env)
+
+        ##### Original
+        # if 'mujoco_norm' in args.load_policy_path:
+        #     test_env = MujocoNormalized(test_env)
+        # elif 'normalized' in args.load_policy_path:
+        #     test_env = DummyVecEnv([lambda: test_env])
+        #     test_env = VecNormalize.load('data/models/env_stats/' + args.sim_env + '.pkl',
+        #                                  venv=test_env)
 
         sim_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.sim_env + '_1000000_.pkl'
         real_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.real_env + '_1000000_.pkl'
@@ -381,13 +397,14 @@ def main():
         #     sim_policy = sim_policy.replace('1000000_.pkl', '2000000_mujoco_norm_.pkl')
         #     real_policy = real_policy.replace('1000000_.pkl', '2000000_mujoco_norm_.pkl')
 
-        if 'mujoco_norm' in args.load_policy_path:
-            sim_policy = sim_policy.replace('1000000_.pkl', '2000000_mujoco_norm_.pkl')
-            real_policy = real_policy.replace('1000000_.pkl', '2000000_mujoco_norm_.pkl')
-
-        elif 'normalized' in args.load_policy_path:
-            sim_policy = sim_policy.replace('1000000_.pkl', '1000000_normalized_.pkl')
-            real_policy = real_policy.replace('1000000_.pkl', '1000000_normalized_.pkl')
+        ##### Original
+        # if 'mujoco_norm' in args.load_policy_path:
+        #     sim_policy = sim_policy.replace('1000000_.pkl', '2000000_mujoco_norm_.pkl')
+        #     real_policy = real_policy.replace('1000000_.pkl', '2000000_mujoco_norm_.pkl')
+        #
+        # elif 'normalized' in args.load_policy_path:
+        #     sim_policy = sim_policy.replace('1000000_.pkl', '1000000_normalized_.pkl')
+        #     real_policy = real_policy.replace('1000000_.pkl', '1000000_normalized_.pkl')
 
         if args.target_policy_algo == 'PPO2':
             algo = PPO2
