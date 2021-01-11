@@ -127,6 +127,7 @@ def get_parent_env(env_name):
         'Hopper-v2': 'Hopper-v2',
         'HopperModified-v2': 'Hopper-v2',
         'HopperArmatureModified-v2': 'Hopper-v2',
+        'HopperFrictionModified-v2': 'Hopper-v2',
         'DartHopper-v1': 'Hopper-v2',
         'InvertedPendulumModified-v2_old': 'InvertedPendulum-v2',
         'InvertedPendulum-v2': 'InvertedPendulum-v2',
