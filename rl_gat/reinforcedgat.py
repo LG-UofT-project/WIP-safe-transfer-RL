@@ -34,7 +34,6 @@ import pickle
 from safe_rl_cmdp.trpo_lagrangian import TRPO_lagrangian
 from safe_rl_cmdp.utils import FeedForwardWithSafeValue, MLPWithSafeValue, CnnWithSafeValue
 from stable_baselines.sac.policies import FeedForwardPolicy as ffp_sac
-from gym.wrappers import TimeLimit
 
 
 class Unbuffered(object):
@@ -452,6 +451,7 @@ class GroundedEnv(gym.ActionWrapper):
                  data_collection_mode=False,
                  use_deterministic=True,
                  atp_policy_noise=0.0,
+                 discriminators = None
                  ):
         super(GroundedEnv, self).__init__(env)
         self.debug_mode = debug_mode
@@ -468,6 +468,8 @@ class GroundedEnv(gym.ActionWrapper):
             self.Ts = []
         else:
             self.data_collection_mode = False
+        
+        self.discriminators = discriminators
         # These are set when reset() is called
         self.latest_obs = None
         # self.prev_frames = None
@@ -521,7 +523,8 @@ class GroundedEnv(gym.ActionWrapper):
         # transformed_action = action + delta_transformed_action
 
         transformed_action = np.clip(transformed_action, self.low, self.high)
-
+        
+        concat_sa = np.hstack((self.latest_obs, transformed_action))
         # transformed_action = delta_transformed_action
         if self.normalizer is not None:
             self.latest_obs, rew, done, info = self.normalizer.step(transformed_action)
@@ -529,7 +532,8 @@ class GroundedEnv(gym.ActionWrapper):
             rew, done, info = rew[0], done[0], info[0]
         else:
             self.latest_obs, rew, done, info = self.env.step(transformed_action)
-
+        
+        concat_sas = np.hstack((concat_sa, self.latest_obs))
         # if self.normalizer is not None:
         #     self.latest_obs = self.normalizer.normalize_obs(self.latest_obs)
         # self.prev_frames = self.prev_frames[1:]+[self.latest_obs]
@@ -563,8 +567,33 @@ class GroundedEnv(gym.ActionWrapper):
             self.T.append((self.latest_obs, None))
             self.Ts.extend(self.T)
             self.T = []
-
-        return self.latest_obs, rew, done, info
+        
+        delta_r = 0
+        
+        if self.discriminators is not None:
+            discriminator, discriminator_sa = self.discriminators
+            
+            # TODO : Apply Norm for inputs for SAS and SA as in ATPEnv? Defaults seem to be None 
+            concat_sas = torch.tensor(concat_sas).float().to(self.device)
+            concat_sa = torch.tensor(concat_sa).float().to(self.device)
+            
+            # TODO: Incorporate shared network structure
+            disc_rew_logit = discriminator(concat_sas)
+            disc_rew = torch.nn.Sigmoid()(disc_rew_logit) # pass through sigmoid
+            disc_rew = disc_rew.detach().to(self.device).numpy()
+            
+            disc_sa_rew_logit = discriminator_sa(concat_sa)
+            disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
+            disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
+            
+            # Logify the discriminator values
+            disc_rew = (np.log(disc_rew + 1e-8) - np.log(1 - disc_rew + 1e-8))[0]
+            disc_sa_rew = (np.log(disc_sa_rew + 1e-8) - np.log(1 - disc_sa_rew + 1e-8))[0]
+            
+            delta_r = disc_rew - disc_sa_rew
+            
+            
+        return self.latest_obs, rew + delta_r, done, info
 
     def get_trajs(self):
         return self.Ts
@@ -651,8 +680,6 @@ class ReinforcedGAT:
                  atp_loss_function='GAIL',
                  single_batch_size=None,
                  shared_double=False,
-                 mujoco_norm=False,
-                 time_limit=False,
                  ):
 
         self.single_batch_size=single_batch_size
@@ -685,8 +712,7 @@ class ReinforcedGAT:
         self.num_rl_threads = num_rl_threads
 
         # using custom mujoco normalization scheme
-        self.mujoco_norm = mujoco_norm
-        self.time_limit = time_limit
+        self.mujoco_norm = False
         # if 'mujoco_norm' in load_policy: self.mujoco_norm = True
 
 
@@ -695,14 +721,12 @@ class ReinforcedGAT:
         # else:
         env = gym.make(self.real_env_name)
         if self.mujoco_norm: env = MujocoNormalized(env)
-        if self.time_limit: env = TimeLimit(env)
         self.real_env = DummyVecEnv([lambda: env])
 
         # print('MODIFIED ENV BODY_MASS : ',
         #       gym.make(self.real_env_name).model.body_mass)
         env = gym.make(self.env_name)
         if self.mujoco_norm: env = MujocoNormalized(env)
-        if self.time_limit: env = TimeLimit(env)
         self.sim_env = DummyVecEnv([lambda: env])
         # print('SIMULATED ENV BODY_MASS : ',
         #       gym.make(self.env_name).model.body_mass)
@@ -730,48 +754,47 @@ class ReinforcedGAT:
         # self.use_wgan = True if atp_loss_function == 'WGAN' else False
         self.shared_double = shared_double
 
-    ##### Original
-    # def _randomize_target_policy(self, algo, env=None):
-    #
-    #     cprint('### ~~~ RESETTING TARGET POLICY ~~~ ###', 'red', 'on_blue')
-    #
-    #     with open('data/target_policy_params.yaml') as file:
-    #         args = yaml.load(file, Loader=yaml.FullLoader)
-    #
-    #     if algo == "PPO2":
-    #         cprint('Using PPO2 as the Target Policy Algo', 'yellow')
-    #         args = args['PPO2'][self.env_name]
-    #         self.target_policy = PPO2(
-    #             OtherMlpPolicy,
-    #             env=DummyVecEnv([lambda: gym.make(self.env_name)]),
-    #             verbose=1,
-    #             n_steps=args['n_steps'],
-    #             nminibatches=args['nminibatches'],
-    #             lam=args['lam'],
-    #             gamma=args['gamma'],
-    #             noptepochs=args['noptepochs'],
-    #             ent_coef=args['ent_coef'],
-    #             learning_rate=args['learning_rate'],
-    #             cliprange=args['cliprange'],
-    #         )
-    #
-    #     elif algo == "TRPO":
-    #         cprint('Using TRPO as the Target Policy Algo', 'yellow')
-    #         args = args['TRPO'][self.env_name]
-    #         self.target_policy = TRPO(
-    #             OtherMlpPolicy,
-    #             env=DummyVecEnv([lambda: gym.make(self.env_name)]),
-    #             verbose=1,
-    #             timesteps_per_batch=args['timesteps_per_batch'],
-    #             lam=args['lam'],
-    #             max_kl=args['max_kl'],
-    #             gamma=args['gamma'],
-    #             vf_iters=args['vf_iters'],
-    #             vf_stepsize=args['vf_stepsize'],
-    #             entcoeff=args['entcoeff'],
-    #             cg_damping=args['cg_damping'],
-    #             cg_iters=args['cg_iters']
-    #         )
+    def _randomize_target_policy(self, algo, env=None):
+
+        cprint('### ~~~ RESETTING TARGET POLICY ~~~ ###', 'red', 'on_blue')
+
+        with open('data/target_policy_params.yaml') as file:
+            args = yaml.load(file, Loader=yaml.FullLoader)
+
+        if algo == "PPO2":
+            cprint('Using PPO2 as the Target Policy Algo', 'yellow')
+            args = args['PPO2'][self.env_name]
+            self.target_policy = PPO2(
+                OtherMlpPolicy,
+                env=DummyVecEnv([lambda: gym.make(self.env_name)]),
+                verbose=1,
+                n_steps=args['n_steps'],
+                nminibatches=args['nminibatches'],
+                lam=args['lam'],
+                gamma=args['gamma'],
+                noptepochs=args['noptepochs'],
+                ent_coef=args['ent_coef'],
+                learning_rate=args['learning_rate'],
+                cliprange=args['cliprange'],
+            )
+
+        elif algo == "TRPO":
+            cprint('Using TRPO as the Target Policy Algo', 'yellow')
+            args = args['TRPO'][self.env_name]
+            self.target_policy = TRPO(
+                OtherMlpPolicy,
+                env=DummyVecEnv([lambda: gym.make(self.env_name)]),
+                verbose=1,
+                timesteps_per_batch=args['timesteps_per_batch'],
+                lam=args['lam'],
+                max_kl=args['max_kl'],
+                gamma=args['gamma'],
+                vf_iters=args['vf_iters'],
+                vf_stepsize=args['vf_stepsize'],
+                entcoeff=args['entcoeff'],
+                cg_damping=args['cg_damping'],
+                cg_iters=args['cg_iters']
+            )
 
     def _init_target_policy(self, load_policy, algo, env=None, tensorboard=False):
 
@@ -985,13 +1008,13 @@ class ReinforcedGAT:
             else:
                 raise NotImplementedError("Algo "+algo+" not supported yet")
 
-    ##### Original
-    # def _init_normalization_stats(self, training=False):
-    #     print('Using a policy trained in normalized environment.. Loading normalizer')
-    #     self.target_policy_norm_obs = VecNormalize.load('data/models/env_stats/'+self.env_name+'.pkl',
-    #                                                     venv=DummyVecEnv([lambda: gym.make(self.env_name)]))
-    #     self.target_policy_norm_obs.training = training
-    #     self.target_policy_norm_obs.norm_obs = True
+
+    def _init_normalization_stats(self, training=False):
+        print('Using a policy trained in normalized environment.. Loading normalizer')
+        self.target_policy_norm_obs = VecNormalize.load('data/models/env_stats/'+self.env_name+'.pkl',
+                                                        venv=DummyVecEnv([lambda: gym.make(self.env_name)]))
+        self.target_policy_norm_obs.training = training
+        self.target_policy_norm_obs.norm_obs = True
 
     def wgan_loss(self, output, target):
         b_real = output[target == 1.0]
@@ -1122,7 +1145,6 @@ class ReinforcedGAT:
         ########### CREATE ACTION TRANSFORMER POLICY ##########
         env = gym.make(self.env_name)
         if self.mujoco_norm: env = MujocoNormalized(env)
-        if self.time_limit: env = TimeLimit(env)
 
         self.atp_environment = ATPEnv(env=env,
                                       target_policy=self.target_policy,
@@ -1241,7 +1263,8 @@ class ReinforcedGAT:
                                             time_steps=LEARN_TIMESTEPS,
                                             use_eval_callback=False,
                                             save_model=True,
-                                            use_deterministic=False):
+                                            use_deterministic=False,
+                                            use_darc = False):
         """Trains target policy in grounded env"""
         print('TRAINING TARGET POLICY IN GROUNDED ENVIRONMENT FOR ', time_steps,' TIMESTEPS')
         if use_deterministic: print('USING DETERMINISTIC ATP')
@@ -1249,13 +1272,14 @@ class ReinforcedGAT:
 
         env = gym.make(self.env_name)
         if self.mujoco_norm: env = MujocoNormalized(env)
-        if self.time_limit: env = TimeLimit(env)
 
         # if self.target_policy_norm_obs is not None:
         #     self._init_normalization_stats(training=False)
 
         if 'Ant' in self.env_name: use_deterministic = True
-
+        
+        discriminators = None
+        if use_darcs: discriminators = self.discriminator, self.discriminator_sa
         grnd_env = GroundedEnv(env=env,
                                action_tf_policy=self.action_tf_policy,
                                # action_tf_env=self.atp_environment,
@@ -1265,6 +1289,7 @@ class ReinforcedGAT:
                                data_collection_mode=False,
                                use_deterministic=use_deterministic,
                                atp_policy_noise=0.01 if use_deterministic else 0.0,
+                               discriminators = discriminators
                                )
 
         self.grounded_sim_env = DummyVecEnv([lambda: grnd_env])
@@ -1304,7 +1329,6 @@ class ReinforcedGAT:
         if self.mujoco_norm :
             cprint('Using Custom Mujoco Normalization', 'red','on_yellow')
             env = MujocoNormalized(env)
-        if self.time_limit: env = TimeLimit(env)
 
         # if self.target_policy_norm_obs is not None:
         #     cprint('Initializing Normalization Stats', 'red','on_yellow')
@@ -1535,7 +1559,6 @@ class ReinforcedGAT:
         else:
             env = gym.make(self.env_name)
             if self.mujoco_norm: env = MujocoNormalized(env)
-            if self.time_limit: env = TimeLimit(env)
         # env = gym.make(self.env_name)
         # if self.mujoco_norm: env = MujocoNormalized(env)
 
