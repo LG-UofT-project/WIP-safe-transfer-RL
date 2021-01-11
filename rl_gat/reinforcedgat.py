@@ -338,7 +338,7 @@ class ATPEnv(gym.Wrapper):
                 disc_rew_sas = torch.nn.Sigmoid()(disc_rew_logit[0] + disc_rew_logit[1]) # pass through sigmoid
                 disc_rew_sa = disc_rew_sa.detach().to(self.device).numpy()
                 disc_rew_sas = disc_rew_sas.detach().to(self.device).numpy()
-            else: # Original
+            else: # Original and Separate double discriminator
                 disc_rew = torch.nn.Sigmoid()(disc_rew_logit) # pass through sigmoid
                 disc_rew = disc_rew.detach().to(self.device).numpy()
 
@@ -351,20 +351,20 @@ class ATPEnv(gym.Wrapper):
                 disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
                 disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
 
+
             # log-ify the discriminator value
             # 1e-8 term was used by faraz in the GAIfO implementation
             if self.loss == 'GAIL':
                 if self.shared_double:
                     disc_rew = (np.log(disc_rew_sas + 1e-8) - np.log(1 - disc_rew_sas + 1e-8))[0] \
                                - (np.log(disc_rew_sa + 1e-8) - np.log(1 - disc_rew_sa + 1e-8))[0]
-                else:  # Single discriminator
-                    disc_rew = -(np.log(1 - disc_rew + 1e-8))[0]
-
-                if self.discriminator_sa is not None:
+                elif self.discriminator_sa is not None:
                     disc_rew = (np.log(disc_rew + 1e-8) - np.log(1 - disc_rew + 1e-8))[0]
                     disc_sa_rew = (np.log(disc_sa_rew + 1e-8) - np.log(1 - disc_sa_rew + 1e-8))[0]
                     # disc_rew = -(np.log(disc_rew + 1e-8) + np.log(1 - disc_rew + 1e-8))[0]
                     # disc_sa_rew = -(np.log(disc_sa_rew + 1e-8) + np.log(1 - disc_sa_rew + 1e-8))[0]
+                else:  # Single discriminator
+                    disc_rew = -(np.log(1 - disc_rew + 1e-8))[0]
             # non saturating loss function
             elif self.loss == 'NSGAIL':
                 disc_rew = np.log(disc_rew + 1e-8)[0]
@@ -452,7 +452,8 @@ class GroundedEnv(gym.ActionWrapper):
                  data_collection_mode=False,
                  use_deterministic=True,
                  atp_policy_noise=0.0,
-                 discriminators = None
+                 discriminators=None,
+                 device='cpu',
                  ):
         super(GroundedEnv, self).__init__(env)
         self.debug_mode = debug_mode
@@ -469,7 +470,7 @@ class GroundedEnv(gym.ActionWrapper):
             self.Ts = []
         else:
             self.data_collection_mode = False
-        
+
         self.discriminators = discriminators
         # These are set when reset() is called
         self.latest_obs = None
@@ -479,6 +480,7 @@ class GroundedEnv(gym.ActionWrapper):
         self.low = env.action_space.low
         self.use_deterministic = use_deterministic
         self.atp_policy_noise = atp_policy_noise
+        self.device = device
 
     def reset(self, **kwargs):
         if self.normalizer is not None:
@@ -524,7 +526,7 @@ class GroundedEnv(gym.ActionWrapper):
         # transformed_action = action + delta_transformed_action
 
         transformed_action = np.clip(transformed_action, self.low, self.high)
-        
+
         concat_sa = np.hstack((self.latest_obs, transformed_action))
         # transformed_action = delta_transformed_action
         if self.normalizer is not None:
@@ -533,7 +535,7 @@ class GroundedEnv(gym.ActionWrapper):
             rew, done, info = rew[0], done[0], info[0]
         else:
             self.latest_obs, rew, done, info = self.env.step(transformed_action)
-        
+
         concat_sas = np.hstack((concat_sa, self.latest_obs))
         # if self.normalizer is not None:
         #     self.latest_obs = self.normalizer.normalize_obs(self.latest_obs)
@@ -568,32 +570,42 @@ class GroundedEnv(gym.ActionWrapper):
             self.T.append((self.latest_obs, None))
             self.Ts.extend(self.T)
             self.T = []
-        
+
         delta_r = 0
-        
+
         if self.discriminators is not None:
             discriminator, discriminator_sa = self.discriminators
-            
-            # TODO : Apply Norm for inputs for SAS and SA as in ATPEnv? Defaults seem to be None 
-            concat_sas = torch.tensor(concat_sas).float().to(self.device)
-            concat_sa = torch.tensor(concat_sa).float().to(self.device)
-            
-            # TODO: Incorporate shared network structure
-            disc_rew_logit = discriminator(concat_sas)
-            disc_rew = torch.nn.Sigmoid()(disc_rew_logit) # pass through sigmoid
-            disc_rew = disc_rew.detach().to(self.device).numpy()
-            
-            disc_sa_rew_logit = discriminator_sa(concat_sa)
-            disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
-            disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
-            
-            # Logify the discriminator values
-            disc_rew = (np.log(disc_rew + 1e-8) - np.log(1 - disc_rew + 1e-8))[0]
-            disc_sa_rew = (np.log(disc_sa_rew + 1e-8) - np.log(1 - disc_sa_rew + 1e-8))[0]
-            
-            delta_r = disc_rew - disc_sa_rew
-            
-            
+            if isinstance(discriminator, Shared_Discriminator): # Shared discriminators
+                concat_sas = torch.tensor(concat_sas).float().to(self.device)
+                disc_rew_logit = discriminator(concat_sas)
+
+                disc_rew_sa = torch.nn.Sigmoid()(disc_rew_logit[0])  # pass through sigmoid
+                disc_rew_sas = torch.nn.Sigmoid()(disc_rew_logit[0] + disc_rew_logit[1])  # pass through sigmoid
+                disc_rew_sa = disc_rew_sa.detach().to(self.device).numpy()
+                disc_rew_sas = disc_rew_sas.detach().to(self.device).numpy()
+
+                delta_r = (np.log(disc_rew_sas + 1e-8) - np.log(1 - disc_rew_sas + 1e-8))[0] \
+                           - (np.log(disc_rew_sa + 1e-8) - np.log(1 - disc_rew_sa + 1e-8))[0]
+            else: # Separate discriminators
+                # TODO : Apply Norm for inputs for SAS and SA as in ATPEnv? Defaults seem to be None
+                concat_sas = torch.tensor(concat_sas).float().to(self.device)
+                concat_sa = torch.tensor(concat_sa).float().to(self.device)
+
+                # TODO: Incorporate shared network structure
+                disc_rew_logit = discriminator(concat_sas)
+                disc_rew = torch.nn.Sigmoid()(disc_rew_logit) # pass through sigmoid
+                disc_rew = disc_rew.detach().to(self.device).numpy()
+
+                disc_sa_rew_logit = discriminator_sa(concat_sa)
+                disc_sa_rew = torch.nn.Sigmoid()(disc_sa_rew_logit)
+                disc_sa_rew = disc_sa_rew.detach().to(self.device).numpy()
+
+                # Logify the discriminator values
+                disc_rew = (np.log(disc_rew + 1e-8) - np.log(1 - disc_rew + 1e-8))[0]
+                disc_sa_rew = (np.log(disc_sa_rew + 1e-8) - np.log(1 - disc_sa_rew + 1e-8))[0]
+
+                delta_r = disc_rew - disc_sa_rew
+
         return self.latest_obs, rew + delta_r, done, info
 
     def get_trajs(self):
@@ -1286,9 +1298,9 @@ class ReinforcedGAT:
         #     self._init_normalization_stats(training=False)
 
         if 'Ant' in self.env_name: use_deterministic = True
-        
+
         discriminators = None
-        if use_darcs: discriminators = self.discriminator, self.discriminator_sa
+        if use_darc: discriminators = self.discriminator, self.discriminator_sa
         grnd_env = GroundedEnv(env=env,
                                action_tf_policy=self.action_tf_policy,
                                # action_tf_env=self.atp_environment,
@@ -1298,7 +1310,8 @@ class ReinforcedGAT:
                                data_collection_mode=False,
                                use_deterministic=use_deterministic,
                                atp_policy_noise=0.01 if use_deterministic else 0.0,
-                               discriminators = discriminators
+                               discriminators=discriminators,
+                               device=self.device,
                                )
 
         self.grounded_sim_env = DummyVecEnv([lambda: grnd_env])
@@ -1351,6 +1364,7 @@ class ReinforcedGAT:
                                debug_mode=True,
                                normalizer=self.target_policy_norm_obs,
                                use_deterministic=True,
+                               device=self.device,
                                )
 
         obs = grnd_env.reset()

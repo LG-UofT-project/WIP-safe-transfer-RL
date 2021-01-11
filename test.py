@@ -155,8 +155,8 @@ def main():
     parser.add_argument('--double_discriminators', action='store_true', help="set to use separate double discriminators")
     parser.add_argument('--shared_double_discriminators', action='store_false', help="set to use shared double discriminators")
     parser.add_argument('--use_darc', action='store_false', help="set to use reward shaping mechanism from DARC")
-    parser.add_argument('--mujoco_norm', action='store_false', help="normalize environment")
-    parser.add_argument('--time_limit', action='store_false', help="set maximum episode length")
+    parser.add_argument('--mujoco_norm', action='store_true', help="normalize environment")
+    parser.add_argument('--time_limit', action='store_true', help="set maximum episode length")
 
     args = parser.parse_args()
 
