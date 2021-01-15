@@ -575,8 +575,12 @@ class GroundedEnv(gym.ActionWrapper):
 
         if self.discriminators is not None:
             discriminator, discriminator_sa = self.discriminators
+
+            concat_sas = apply_norm(concat_sas, self.input_norm[0])
+            concat_sas = torch.tensor(concat_sas).float().to(self.device)
+
             if isinstance(discriminator, Shared_Discriminator): # Shared discriminators
-                concat_sas = torch.tensor(concat_sas).float().to(self.device)
+                # concat_sas = torch.tensor(concat_sas).float().to(self.device)
                 disc_rew_logit = discriminator(concat_sas)
 
                 disc_rew_sa = torch.nn.Sigmoid()(disc_rew_logit[0])  # pass through sigmoid
@@ -588,7 +592,8 @@ class GroundedEnv(gym.ActionWrapper):
                            - (np.log(disc_rew_sa + 1e-8) + np.log(1 - disc_rew_sa + 1e-8))[0]
             else: # Separate discriminators
                 # TODO : Apply Norm for inputs for SAS and SA as in ATPEnv? Defaults seem to be None
-                concat_sas = torch.tensor(concat_sas).float().to(self.device)
+                # concat_sas = torch.tensor(concat_sas).float().to(self.device)
+                concat_sa = apply_norm(concat_sa, self.input_sa_norm[0])
                 concat_sa = torch.tensor(concat_sa).float().to(self.device)
 
                 # TODO: Incorporate shared network structure
