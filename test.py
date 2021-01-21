@@ -322,8 +322,8 @@ def main():
                 gatworld.save_atp(grounding_step=str(grounding_step) + '_' + str(ii))
                 # gatworld.save_grounded_env(grounding_step=str(grounding_step) + '_' + str(ii))
 
-        # if args.randomize_target_policy:
-        #     gatworld._randomize_target_policy(algo=args.target_policy_algo)
+        if args.randomize_target_policy:
+            gatworld._randomize_target_policy(algo=args.target_policy_algo)
 
         gatworld.train_target_policy_in_grounded_env(grounding_step=grounding_step,
                                                      alpha=args.alpha,

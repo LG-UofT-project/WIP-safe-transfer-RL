@@ -790,47 +790,47 @@ class ReinforcedGAT:
         self.shared_double = shared_double
 
     ##### Original
-    # def _randomize_target_policy(self, algo, env=None):
-    #
-    #     cprint('### ~~~ RESETTING TARGET POLICY ~~~ ###', 'red', 'on_blue')
-    #
-    #     with open('data/target_policy_params.yaml') as file:
-    #         args = yaml.load(file, Loader=yaml.FullLoader)
-    #
-    #     if algo == "PPO2":
-    #         cprint('Using PPO2 as the Target Policy Algo', 'yellow')
-    #         args = args['PPO2'][self.env_name]
-    #         self.target_policy = PPO2(
-    #             OtherMlpPolicy,
-    #             env=DummyVecEnv([lambda: gym.make(self.env_name)]),
-    #             verbose=1,
-    #             n_steps=args['n_steps'],
-    #             nminibatches=args['nminibatches'],
-    #             lam=args['lam'],
-    #             gamma=args['gamma'],
-    #             noptepochs=args['noptepochs'],
-    #             ent_coef=args['ent_coef'],
-    #             learning_rate=args['learning_rate'],
-    #             cliprange=args['cliprange'],
-    #         )
-    #
-    #     elif algo == "TRPO":
-    #         cprint('Using TRPO as the Target Policy Algo', 'yellow')
-    #         args = args['TRPO'][self.env_name]
-    #         self.target_policy = TRPO(
-    #             OtherMlpPolicy,
-    #             env=DummyVecEnv([lambda: gym.make(self.env_name)]),
-    #             verbose=1,
-    #             timesteps_per_batch=args['timesteps_per_batch'],
-    #             lam=args['lam'],
-    #             max_kl=args['max_kl'],
-    #             gamma=args['gamma'],
-    #             vf_iters=args['vf_iters'],
-    #             vf_stepsize=args['vf_stepsize'],
-    #             entcoeff=args['entcoeff'],
-    #             cg_damping=args['cg_damping'],
-    #             cg_iters=args['cg_iters']
-    #         )
+    def _randomize_target_policy(self, algo, env=None):
+
+        cprint('### ~~~ RESETTING TARGET POLICY ~~~ ###', 'red', 'on_blue')
+
+        with open('data/target_policy_params.yaml') as file:
+            args = yaml.load(file, Loader=yaml.FullLoader)
+
+        if algo == "PPO2":
+            cprint('Using PPO2 as the Target Policy Algo', 'yellow')
+            args = args['PPO2'][self.env_name]
+            self.target_policy = PPO2(
+                OtherMlpPolicy,
+                env=DummyVecEnv([lambda: gym.make(self.env_name)]),
+                verbose=1,
+                n_steps=args['n_steps'],
+                nminibatches=args['nminibatches'],
+                lam=args['lam'],
+                gamma=args['gamma'],
+                noptepochs=args['noptepochs'],
+                ent_coef=args['ent_coef'],
+                learning_rate=args['learning_rate'],
+                cliprange=args['cliprange'],
+            )
+
+        elif algo == "TRPO":
+            cprint('Using TRPO as the Target Policy Algo', 'yellow')
+            args = args['TRPO'][self.env_name]
+            self.target_policy = TRPO(
+                OtherMlpPolicy,
+                env=DummyVecEnv([lambda: gym.make(self.env_name)]),
+                verbose=1,
+                timesteps_per_batch=args['timesteps_per_batch'],
+                lam=args['lam'],
+                max_kl=args['max_kl'],
+                gamma=args['gamma'],
+                vf_iters=args['vf_iters'],
+                vf_stepsize=args['vf_stepsize'],
+                entcoeff=args['entcoeff'],
+                cg_damping=args['cg_damping'],
+                cg_iters=args['cg_iters']
+            )
 
     def _init_target_policy(self, load_policy, algo, env=None, tensorboard=False):
 

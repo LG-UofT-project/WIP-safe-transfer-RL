@@ -148,6 +148,10 @@ def train_initial_policy(
     print('~~ ENV Obs RANGE : ', env.observation_space.low, env.observation_space.high)
     print('~~~ ENV Action RANGE : ', env.action_space.low, env.action_space.high)
 
+    if TIMEWRAPPER:
+        # env = TimeFeatureWrapper(env)
+        env = TimeLimit(env, 1000)
+
     if algo.__name__  == "ACKTR":
         print('Using SubprovVecEnv')
         env = SubprocVecEnv([lambda: env for i in range(8)])
@@ -165,11 +169,6 @@ def train_initial_policy(
                            norm_reward=False,
                            clip_reward=1e6,
                            )
-
-    if TIMEWRAPPER:
-        # env = TimeFeatureWrapper(env)
-        env = TimeLimit(env, 1000)
-
 
     with open('data/target_policy_params.yaml') as file:
         args = yaml.load(file, Loader=yaml.FullLoader)
