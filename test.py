@@ -94,22 +94,17 @@ def main():
     # Set default parameters to follow run_experiments.sh
     parser = argparse.ArgumentParser(description='Reinforced Grounded Action Transformation')
     parser.add_argument('--target_policy_algo', default="SAC", type=str, help="name in str of the agent policy training algorithm")
-    # TRPO_lagrangian
     parser.add_argument('--action_tf_policy_algo', default="PPO2", type=str, help="name in str of the Action Transformer policy training algorithm")
     parser.add_argument('--load_policy_path', default="data/models/SAC_initial_policy_steps_InvertedPendulum-v2_1000000_.pkl", help="relative path of initial policy trained in sim")
-    # parser.add_argument('--load_policy_path', default="data/models/SAC_initial_policy_steps_InvertedPendulum-v2_1000000_.pkl", help="relative path of initial policy trained in sim")
-    # parser.add_argument('--load_policy_path', default="data/models/garat/Single_SAC_InvertedPendulum_second_GAIL_sim2real_SAC_1000000_3000_50_5/target_policy_0.pkl", help="relative path of initial policy trained in sim")
+    parser.add_argument('--load_atp_policy_path', default=None, help="relative path of action transformation policy for reuse")
     parser.add_argument('--alpha', default=1.0, type=float, help="Deprecated feature. Ignore")
     parser.add_argument('--beta', default=1.0, type=float, help="Deprecated feature. Ignore")
     parser.add_argument('--n_trainsteps_target_policy', default=1000000, type=int, help="Number of time steps to train the agent policy in the grounded environment")
-    # 1M in GARAT paper? 1e8 for doggo, 1e7 for else
     parser.add_argument('--n_trainsteps_action_tf_policy', default=1000000, type=int, help="Timesteps to train the Action Transformer policy in the ATPEnvironment")
     # Depreciated; gsim_trans*generator_epochs if not single_batch_test else 5000
     parser.add_argument('--num_cores', default=1, type=int, help="Number of threads to use while collecting real world experience") # was 10
     parser.add_argument('--sim_env', default='InvertedPendulum-v2', help="Name of the simulator environment (Unmodified)")
-    # InvertedPendulum-v2
     parser.add_argument('--real_env', default='InvertedPendulumModified-v2', help="Name of the Real World environment (Modified)")
-    # InvertedPendulumModified-v2
     parser.add_argument('--n_frames', default=1, type=int, help="Number of previous frames observed by discriminator")
     parser.add_argument('--expt_number', default=1, type=int, help="Expt. number to keep track of multiple experiments")
     parser.add_argument('--n_grounding_steps', default=1, type=int, help="Number of grounding steps. (Outerloop of algorithm ) ")
@@ -138,7 +133,7 @@ def main():
     parser.add_argument('--use_eval_callback', action='store_true', help="UNUSED")
     parser.add_argument('--loss_function', default="GAIL", type=str, help="choose from the list: ['GAIL', 'WGAN', 'AIRL', 'FAIRL']")
     parser.add_argument('--reset_disc_only', action='store_true', help="UNUSED")
-    parser.add_argument('--namespace', default="TEST_InvertedPendulum_2", type=str, help="namespace for the experiments")
+    parser.add_argument('--namespace', default="TEST1", type=str, help="namespace for the experiments")
     parser.add_argument('--dont_reset', action='store_true', help="UNUSED")
     parser.add_argument('--reset_target_policy', action='store_true', help="UNUSED")
     parser.add_argument('--randomize_target_policy', action='store_true', help="UNUSED")
@@ -251,20 +246,41 @@ def main():
 
     if args.reset_disc_only or args.dont_reset:
         cprint('~~ INITIALIZING DISCRIMINATOR AND ATP POLICY ~~', 'yellow')
-        gatworld._init_rgat_models(algo=args.action_tf_policy_algo,
-                                   ent_coeff=args.ent_coeff,
-                                   max_kl=args.max_kl,
-                                   clip_range=args.clip_range,
-                                   atp_loss_function=args.loss_function,
-                                   disc_lr=args.disc_lr,
-                                   atp_lr=args.atp_lr,
-                                   nminibatches=args.nminibatches,
-                                   noptepochs=args.noptepochs,
-                                   double_discriminators=args.double_discriminators,
-                                   )
+        # gatworld._init_rgat_models(algo=args.action_tf_policy_algo,
+        #                            ent_coeff=args.ent_coeff,
+        #                            max_kl=args.max_kl,
+        #                            clip_range=args.clip_range,
+        #                            atp_loss_function=args.loss_function,
+        #                            disc_lr=args.disc_lr,
+        #                            atp_lr=args.atp_lr,
+        #                            nminibatches=args.nminibatches,
+        #                            noptepochs=args.noptepochs,
+        #                            double_discriminators=args.double_discriminators,
+        #                            )
+        gatworld._init_discriminators(atp_loss_function=args.loss_function,
+                                      disc_lr=args.disc_lr,
+                                      double_discriminators=args.double_discriminators,
+                                      )
+        gatworld._init_ATP(algo=args.action_tf_policy_algo,
+                           atp_load_policy=args.load_atp_policy_path,
+                           ent_coeff=args.ent_coeff,
+                           max_kl=args.max_kl,
+                           clip_range=args.clip_range,
+                           atp_lr=args.atp_lr,
+                           nminibatches=args.nminibatches,
+                           noptepochs=args.noptepochs,
+                           )
 
+    expt_path_base = expt_path
+    expt_label_base = expt_label
     for _ in range(args.n_grounding_steps-start_grouding_step):
         grounding_step += 1
+
+        # RESET expt_path and expt_label
+        expt_path = expt_path_base + '/grounding_step_' + str(_)
+        expt_label = expt_label_base + '_' + str(_)
+        gatworld.set_exp_path(expt_path, expt_label)
+        os.makedirs(expt_path)
 
         real_Rs, real_Cs = gatworld.collect_experience_from_real_env(constrained = constrained)
         with open(expt_path + '/real_rewards' + str(grounding_step) + '.txt', 'w') as fr:
@@ -275,17 +291,23 @@ def main():
             fc.close()
 
         cprint('~~ RESETTING DISCRIMINATOR AND ATP POLICY ~~', 'yellow')
-        gatworld._init_rgat_models(algo=args.action_tf_policy_algo,
-                                   ent_coeff=args.ent_coeff,
-                                   max_kl=args.max_kl,
-                                   clip_range=args.clip_range,
-                                   atp_loss_function=args.loss_function,
-                                   disc_lr=args.disc_lr,
-                                   atp_lr=args.atp_lr,
-                                   nminibatches=args.nminibatches,
-                                   noptepochs=args.noptepochs,
-                                   double_discriminators=args.double_discriminators,
-                                   )
+        if args.reset_disc_only:
+            gatworld._init_discriminators(atp_loss_function=args.loss_function,
+                                          disc_lr=args.disc_lr,
+                                          double_discriminators=args.double_discriminators,
+                                          )
+        else:
+            gatworld._init_rgat_models(algo=args.action_tf_policy_algo,
+                                       ent_coeff=args.ent_coeff,
+                                       max_kl=args.max_kl,
+                                       clip_range=args.clip_range,
+                                       atp_loss_function=args.loss_function,
+                                       disc_lr=args.disc_lr,
+                                       atp_lr=args.atp_lr,
+                                       nminibatches=args.nminibatches,
+                                       noptepochs=args.noptepochs,
+                                       double_discriminators=args.double_discriminators,
+                                       )
 
         # ground the environment
         for ii in range(args.n_iters_atp):

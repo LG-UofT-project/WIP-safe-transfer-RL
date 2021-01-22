@@ -1295,6 +1295,231 @@ class ReinforcedGAT:
         else:
             raise NotImplementedError("Algo "+algo+" not supported")
 
+    def _init_discriminators(self,
+                             atp_loss_function='GAIL',
+                             disc_lr=3e-4,
+                             double_discriminators=False,
+                             ):
+        """
+        Initializes discriminator for
+        GARAT
+        """
+
+        ########### CREATE DISCRIMINATOR ##########
+
+        num_inputs = self.sim_env.action_space.shape[0]*(self.frames)
+        num_inputs += self.sim_env.observation_space.shape[0]*(1+self.frames)
+        # input to the discriminator is S_t, a_t, S_t+1
+        if atp_loss_function == 'WGAN':
+            cprint('USING WGAN FORMULATION. No output activation', 'red', 'on_yellow')
+
+        if self.shared_double:
+            self.discriminator = Shared_Discriminator(
+                n_feature=num_inputs,
+                n_hidden=64,
+                activations=nn.ReLU,
+                action_space=self.sim_env.action_space.shape[0]).to(self.device)
+        else:# Original
+            self.discriminator = Discriminator(
+                n_feature=num_inputs,
+                n_hidden=64,
+                activations=nn.ReLU,
+                action_space=self.sim_env.action_space.shape[0]).to(self.device)
+        self.discriminator_norm_x = ((np.zeros(num_inputs),
+                                        np.ones(num_inputs)), 0)
+
+        self.discriminator_sa = None
+        self.discriminator_sa_norm_x = None
+        if double_discriminators:
+            num_sa = self.sim_env.action_space.shape[0] * (self.frames)
+            num_sa += self.sim_env.observation_space.shape[0] * (self.frames)
+
+            # Input to discriminator_sa is S_t, a_t
+            self.discriminator_sa = Discriminator(
+                n_feature = num_sa,
+                n_hidden = 64,
+                activations = nn.ReLU,
+                action_space = self.sim_env.action_space.shape[0]).to(self.device)
+
+            self.discriminator_sa_norm_x = ((np.zeros(num_sa),np.ones(num_sa)),0)
+
+        if atp_loss_function == 'WGAN':
+            self.discriminator_loss = self.wgan_loss
+            if double_discriminators: self.discriminator_sa_loss = self.wgan_loss
+        else:
+            # self.discriminator_loss = torch.nn.BCELoss()
+            if self.shared_double:
+                self.discriminator_loss = self.bce_with_entropy_loss_double
+            else:
+                self.discriminator_loss = self.bce_with_entropy_loss # Original
+
+            if double_discriminators: self.discriminator_sa_loss = self.bce_with_entropy_loss
+            # self.discriminator_loss = torch.nn.BCEWithLogitsLoss()
+            # self.discriminator_loss = torch.nn.MSELoss() # if using lsgan
+
+        # self.optimizer = torch.optim.Adam(
+        #     self.discriminator.parameters(), lr=disc_lr, weight_decay=1e-2)
+        self.optimizer = torch.optim.AdamW(
+            self.discriminator.parameters(), lr=disc_lr, weight_decay=1e-3)
+
+        if double_discriminators: self.optimizer_sa = torch.optim.AdamW(self.discriminator_sa.parameters(), lr = disc_lr, weight_decay = 1e-3)
+        # self.optimizer = torch.optim.RMSprop(
+        #     self.discriminator.parameters(), lr=disc_lr)
+        # self.optimizer = torch.optim.SGD(
+        #     self.discriminator.parameters(), lr=disc_lr)
+
+    def _init_ATP(self, algo="TRPO",
+                  atp_load_policy=None,
+                  ent_coeff=None,
+                  max_kl=None,
+                  clip_range=None,
+                  atp_loss_function='GAIL',
+                  nminibatches=4,
+                  noptepochs=10,
+                  atp_lr=3e-4,
+                  ):
+        """
+        Initializes the action transformer policy
+        """
+
+        ########### CREATE ACTION TRANSFORMER POLICY ##########
+        env = gym.make(self.env_name)
+        if self.mujoco_norm: env = MujocoNormalized(env)
+        if self.time_limit: env = TimeLimit(env)
+
+        self.atp_environment = ATPEnv(env=env,
+                                      target_policy=self.target_policy,
+                                      discriminator=self.discriminator,
+                                      discriminator_sa=self.discriminator_sa,
+                                      fwd_model=None,
+                                      beta=1.0,
+                                      device=self.device,
+                                      train_noise=0.0,
+                                      loss=atp_loss_function,
+                                      normalizer=self.target_policy_norm_obs,
+                                      frames=self.frames,
+                                      data_collection_mode=False,
+                                      expt_path=self.expt_path,
+                                      shared_double=self.shared_double,
+                                      )
+
+        self.atp_environment = DummyVecEnv([lambda : self.atp_environment])
+        # self.atp_environment = VecNormalize(self.atp_environment, training=True, norm_obs=True,
+        #                                     norm_reward=False)
+
+        if atp_load_policy is None:
+            if algo == "TD3":
+                n_actions = self.atp_environment.action_space.shape[-1]
+                action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.2 * np.ones(n_actions))
+                self.action_tf_policy = TD3(
+                    policy=MlpPolicy,
+                    env=DummyVecEnv([lambda: self.atp_environment]),
+                    verbose=1,
+                    # tensorboard_log='data/TBlogs/action_transformer_policy',
+                    batch_size=2048,
+                    buffer_size=1000000,
+                    train_freq=10,
+                    gradient_steps=1000,
+                    gamma=0.99, # NOTE : here, the gamma should be zero !
+                    learning_rate=0.0003,
+                    action_noise=action_noise,
+                    learning_starts=50,
+                    )
+            elif algo == "TRPO":
+                self.action_tf_policy = TRPO(
+                    policy=OtherMlpPolicy,
+                    env=DummyVecEnv([lambda: self.atp_environment]),
+                    verbose=0,
+                    # tensorboard_log='data/TBlogs/action_transformer_policy',
+                    timesteps_per_batch=self.gsim_trans, #self.real_trans,
+                    lam=0.95,
+                    max_kl=max_kl,
+                    gamma=0.99,  # NOTE : here, the gamma should be zero !
+                    vf_iters=1,
+                    vf_stepsize=atp_lr,
+                    entcoeff=ent_coeff,
+                    cg_damping=0.01,
+                    cg_iters=1
+                    )
+            elif algo == "PPO2":
+                class CustomPPO2Policy(FeedForwardPolicy):
+                    def __init__(self, *args, **kwargs):
+                        super(CustomPPO2Policy, self).__init__(*args, **kwargs,
+                                                           net_arch=[dict(pi=[64, 64],
+                                                                          vf=[64, 64])],
+                                                           feature_extraction="mlp")
+                # self.action_tf_policy = PPO2(
+                #     # policy=OtherMlpPolicy,
+                #     policy = CustomPPO2Policy,
+                #     env=DummyVecEnv([lambda: self.atp_environment]),
+                #     # verbose=0,
+                #     nminibatches=4, #int(self.real_trans/2000),
+                #     n_steps=5000, # * self.real_trans,
+                #     ent_coef=ent_coeff,
+                #     noptepochs=10,#4,
+                #     lam=0.95,
+                #     cliprange=clip_range,
+                #     learning_rate=3e-4,
+                #     )
+                cprint('SINGLE BATCH SIZE : '+str(self.single_batch_size), 'red', attrs=['blink'])
+                self.action_tf_policy = PPO2(
+                    policy=OtherMlpPolicy,
+                    # policy = CustomPPO2Policy,
+                    env=DummyVecEnv([lambda: self.atp_environment]),
+                    nminibatches=nminibatches,
+                    n_steps=self.gsim_trans if self.single_batch_size is None else 5000,#nminibatches*self.single_batch_size,
+                    ent_coef=ent_coeff,
+                    noptepochs=noptepochs,
+                    lam=0.95,
+                    cliprange=clip_range,
+                    learning_rate=atp_lr,
+                )
+
+                # self.action_tf_policy = PPO2(
+                #     policy=OtherMlpPolicy,
+                #     # policy = CustomPPO2Policy,
+                #     env=DummyVecEnv([lambda: self.atp_environment]),
+                #     nminibatches=1,
+                #     n_steps=1024,
+                #     ent_coef=ent_coeff,
+                #     noptepochs=1,
+                #     lam=0.95,
+                #     cliprange=clip_range,
+                #     learning_rate=atp_lr,
+                # )
+            elif algo == "SAC":
+                print('~~ Initializing SAC action transformer policy ~~')
+                self.action_tf_policy = SAC(
+                    policy=SACMlpPolicy,
+                    env=DummyVecEnv([lambda: self.atp_environment]),
+                    # tensorboard_log='data/TBlogs/action_transformer_policy',
+                    verbose=0,
+                    batch_size=1024,
+                    buffer_size=1000000)
+            else:
+                raise NotImplementedError("Algo "+algo+" not supported")
+        else:
+            if algo == "PPO2":
+                class CustomPPO2Policy(FeedForwardPolicy):
+                    def __init__(self, *args, **kwargs):
+                        super(CustomPPO2Policy, self).__init__(*args, **kwargs,
+                                                               net_arch=[dict(pi=[64, 64],
+                                                                              vf=[64, 64])],
+                                                               feature_extraction="mlp")
+                cprint('SINGLE BATCH SIZE : ' + str(self.single_batch_size), 'red', attrs=['blink'])
+                self.action_tf_policy = PPO2.load(atp_load_policy,
+                    env=DummyVecEnv([lambda: self.atp_environment]),
+                    nminibatches=nminibatches,
+                    n_steps=self.gsim_trans if self.single_batch_size is None else 5000,
+                    # nminibatches*self.single_batch_size,
+                    ent_coef=ent_coeff,
+                    noptepochs=noptepochs,
+                    lam=0.95,
+                    cliprange=clip_range,
+                    learning_rate=atp_lr,
+                )
+            else:
+                raise NotImplementedError("Algo "+algo+" not supported")
 
     def train_target_policy_in_grounded_env(self, grounding_step, alpha=1.0,
                                             time_steps=LEARN_TIMESTEPS,
@@ -1781,3 +2006,7 @@ class ReinforcedGAT:
     def load_model(self, model_path):
         """Loads the model for the target policy from disk"""
         self.target_policy.load(model_path)
+
+    def set_exp_path(self, expt_path, expt_label):
+        self.expt_path = expt_path
+        self.expt_label = expt_label
