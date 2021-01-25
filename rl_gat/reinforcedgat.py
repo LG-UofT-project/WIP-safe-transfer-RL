@@ -280,7 +280,7 @@ class ATPEnv(gym.Wrapper):
         self.discriminator.set_input_norm(disc_norm)
         self.input_sa_norm = disc_sa_norm
         if discriminator_sa is not None:
-            self.discriminator_sa.set_input_norm(disc_norm)
+            self.discriminator_sa.set_input_norm(disc_sa_norm)
 
     def reset(self, **kwargs):
         """Reset function for the wrapped environment"""
@@ -599,7 +599,7 @@ class GroundedEnv(gym.ActionWrapper):
                 disc_rew_sas = disc_rew_sas.detach().to(self.device).numpy()
 
                 delta_r = (np.log(disc_rew_sas + 1e-8) - np.log(1 - disc_rew_sas + 1e-8))[0] \
-                           - (np.log(disc_rew_sa + 1e-8) + np.log(1 - disc_rew_sa + 1e-8))[0]
+                           - (np.log(disc_rew_sa + 1e-8) - np.log(1 - disc_rew_sa + 1e-8))[0]
             else: # Separate discriminators
                 # TODO : Apply Norm for inputs for SAS and SA as in ATPEnv? Defaults seem to be None
                 concat_sas = apply_norm(concat_sas, discriminator.input_norm[0])

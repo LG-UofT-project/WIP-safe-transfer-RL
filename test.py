@@ -390,6 +390,7 @@ def main():
 
                 with open(expt_path + "/stochastic_output.txt", "a") as txt_file:
                     print(val, file=txt_file)
+                print(expt_path)
             except Exception as e:
                 cprint(e, 'red')
 
@@ -412,7 +413,7 @@ def main():
         sim_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.sim_env + '_1000000_.pkl'
         real_policy = 'data/models/'+args.target_policy_algo+'_initial_policy_steps_' + args.real_env + '_1000000_.pkl'
 
-        if 'HalfCheetah' in args.load_policy_path or 'Reacher' in args.load_policy_path or 'Hopper' in args.load_policy_path or 'Walker2d' in args.load_policy_path or 'Ant' in args.load_policy_path:
+        if 'HalfCheetah' in args.load_policy_path or 'Reacher' in args.load_policy_path or 'Hopper' in args.load_policy_path or 'Walker' in args.load_policy_path or 'Ant' in args.load_policy_path:
             sim_policy = sim_policy.replace('1000000_.pkl', '2000000_.pkl')
             real_policy = real_policy.replace('1000000_.pkl', '2000000_.pkl')
 
