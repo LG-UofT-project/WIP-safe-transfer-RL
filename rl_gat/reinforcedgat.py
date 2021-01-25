@@ -369,7 +369,7 @@ class ATPEnv(gym.Wrapper):
             if self.loss == 'GAIL':
                 if self.shared_double:
                     disc_rew = (np.log(disc_rew_sas + 1e-8) - np.log(1 - disc_rew_sas + 1e-8))[0] \
-                               - (np.log(disc_rew_sa + 1e-8) + np.log(1 - disc_rew_sa + 1e-8))[0]
+                               - (np.log(disc_rew_sa + 1e-8) - np.log(1 - disc_rew_sa + 1e-8))[0]
                 elif self.discriminator_sa is not None:
                     disc_rew = (np.log(disc_rew + 1e-8) - np.log(1 - disc_rew + 1e-8))[0]
                     disc_sa_rew = (np.log(disc_sa_rew + 1e-8) - np.log(1 - disc_sa_rew + 1e-8))[0]
