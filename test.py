@@ -263,6 +263,7 @@ def main():
                                       )
         gatworld._init_ATP(algo=args.action_tf_policy_algo,
                            atp_load_policy=args.load_atp_policy_path,
+                           atp_loss_function=args.loss_function,
                            ent_coeff=args.ent_coeff,
                            max_kl=args.max_kl,
                            clip_range=args.clip_range,
