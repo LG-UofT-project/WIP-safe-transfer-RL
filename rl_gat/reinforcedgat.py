@@ -80,6 +80,88 @@ MAX_EPOCHS_ATP = 5
 # No. of threads to used during RL step
 NUM_RL_THREADS = 1
 
+# class Discriminator(torch.nn.Module):
+#     """network that defines the Discriminator"""
+#     def __init__(self, n_feature, n_hidden, action_space, activations=nn.Tanh):
+#         super(Discriminator, self).__init__()
+#
+#         self.input_norm = None
+#
+#         self.fc_in = nn.Linear(n_feature, n_hidden)
+#         self.fc_h1 = nn.Linear(n_hidden, n_hidden)
+#         self.fc_out = nn.Linear(n_hidden, 1)
+#
+#         self.activations = activations
+#         self.action_space = action_space
+#
+#         torch.nn.init.xavier_uniform_(self.fc_in.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_h1.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_out.weight)
+#
+#     # pylint: disable=arguments-differ
+#     def forward(self, x):
+#         out = self.activations()(self.fc_in(x))
+#         out = self.activations()(self.fc_h1(out))
+#         out = self.fc_out(out)
+#
+#         return out
+#
+#     def set_input_norm(self, input_norm):
+#         self.input_norm = input_norm
+#
+# class Shared_Discriminator(torch.nn.Module):
+#     """network that defines the Discriminator"""
+#     def __init__(self, n_feature, n_hidden, action_space, activations=nn.Tanh):
+#         super(Shared_Discriminator, self).__init__()
+#
+#         self.input_norm = None
+#
+#         # n_features: dimension of SAS
+#         #-------------------- SA parts -------------------
+#         n_sa_features = int((n_feature - action_space)/2) + action_space # Assume to use single frame
+#         self.fc_in = nn.Linear(n_sa_features, n_hidden)
+#         self.fc_h1 = nn.Linear(n_hidden, n_hidden)
+#         self.fc_out = nn.Linear(n_hidden, 1)
+#
+#         self.activations = activations
+#         self.action_space = action_space
+#         self.n_sa_features = n_sa_features
+#
+#         torch.nn.init.xavier_uniform_(self.fc_in.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_h1.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_out.weight)
+#
+#         #-------------------- SAS parts -------------------
+#         self.fc_in_adv = nn.Linear(n_feature, n_hidden)
+#         self.fc_h1_adv = nn.Linear(n_hidden, n_hidden)
+#         self.fc_out_adv = nn.Linear(n_hidden, 1)
+#
+#         torch.nn.init.xavier_uniform_(self.fc_in_adv.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_h1_adv.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_out_adv.weight)
+#
+#     # pylint: disable=arguments-differ
+#     def forward(self, x):
+#         # x: SAS
+#         #-------------------- SA parts -------------------
+#         if len(x.shape) == 1:
+#             x_sa = x[0:self.n_sa_features]
+#         else:
+#             x_sa = x[:, 0:self.n_sa_features]
+#         out_sa = self.activations()(self.fc_in(x_sa))
+#         out_sa = self.activations()(self.fc_h1(out_sa))
+#         out_sa = self.fc_out(out_sa)
+#
+#         #-------------------- SAS parts -------------------
+#         out_sas = self.activations()(self.fc_in_adv(x))
+#         out_sas = self.activations()(self.fc_h1_adv(out_sas))
+#         out_sas = self.fc_out_adv(out_sas)
+#
+#         return [out_sa, out_sas]
+#
+#     def set_input_norm(self, input_norm):
+#         self.input_norm = input_norm
+
 class Discriminator(torch.nn.Module):
     """network that defines the Discriminator"""
     def __init__(self, n_feature, n_hidden, action_space, activations=nn.Tanh):
@@ -289,7 +371,7 @@ class ATPEnv(gym.Wrapper):
             # self.latest_obs = self.normalizer.normalize_obs(self.latest_obs)
             self.latest_obs = self.normalizer.reset(**kwargs)[0]
 
-        self.latest_act, _ = self.target_policy.predict(self.latest_obs, deterministic=True)
+        self.latest_act, _ = self.target_policy.predict(self.latest_obs, deterministic=False)
 
         # create empty list and pad with zeros
         self.prev_frames = []
@@ -328,7 +410,7 @@ class ATPEnv(gym.Wrapper):
         # get target policy action
         # if self.normalizer is not None:
         #     sim_next_state = self.normalizer.normalize_obs(sim_next_state)
-        target_policy_action, _ = self.target_policy.predict(sim_next_state, deterministic=True)
+        target_policy_action, _ = self.target_policy.predict(sim_next_state, deterministic=False)
 
         ###### experimenting with adding noise while training ATPEnv ######
         # target_policy_action = target_policy_action + np.random.normal(0, self.train_noise**0.5, target_policy_action.shape[0])
@@ -1834,7 +1916,7 @@ class ReinforcedGAT:
                                # action_tf_env=self.atp_environment,
                                debug_mode=False,
                                normalizer=self.target_policy_norm_obs,
-                               use_deterministic=True,
+                               use_deterministic=False,
                                atp_policy_noise=0.0,
                                )
 
