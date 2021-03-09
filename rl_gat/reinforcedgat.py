@@ -371,7 +371,7 @@ class ATPEnv(gym.Wrapper):
             # self.latest_obs = self.normalizer.normalize_obs(self.latest_obs)
             self.latest_obs = self.normalizer.reset(**kwargs)[0]
 
-        self.latest_act, _ = self.target_policy.predict(self.latest_obs, deterministic=False)
+        self.latest_act, _ = self.target_policy.predict(self.latest_obs, deterministic=True)
 
         # create empty list and pad with zeros
         self.prev_frames = []
@@ -410,7 +410,7 @@ class ATPEnv(gym.Wrapper):
         # get target policy action
         # if self.normalizer is not None:
         #     sim_next_state = self.normalizer.normalize_obs(sim_next_state)
-        target_policy_action, _ = self.target_policy.predict(sim_next_state, deterministic=False)
+        target_policy_action, _ = self.target_policy.predict(sim_next_state, deterministic=True)
 
         ###### experimenting with adding noise while training ATPEnv ######
         # target_policy_action = target_policy_action + np.random.normal(0, self.train_noise**0.5, target_policy_action.shape[0])
@@ -609,7 +609,14 @@ class GroundedEnv(gym.ActionWrapper):
         concat_sa = np.append(self.latest_obs, action)
         # change made : lets assume the output of the ATP is \delta_a_t
         # concat_sa = self.atp_env.normalize_obs(concat_sa)
-        delta_transformed_action, _ = self.action_tf_policy.predict(concat_sa, deterministic=self.use_deterministic)
+        if isinstance(self.action_tf_policy, list):
+            delta_transformed_action, _ = self.action_tf_policy[0].predict(concat_sa, deterministic=self.use_deterministic)
+            for i in range(1,len(self.action_tf_policy)):
+                delta_transformed_action_i, _ = self.action_tf_policy[i].predict(concat_sa, deterministic=self.use_deterministic)
+                delta_transformed_action += delta_transformed_action_i
+            delta_transformed_action = delta_transformed_action / len(self.action_tf_policy)
+        else:
+            delta_transformed_action, _ = self.action_tf_policy.predict(concat_sa, deterministic=self.use_deterministic)
 
         #NEW : experimenting with adding noise here
         delta_transformed_action += np.random.normal(0, self.atp_policy_noise**0.5, delta_transformed_action.shape[0])
@@ -1126,6 +1133,57 @@ class ReinforcedGAT:
             else:
                 raise NotImplementedError("Algo "+algo+" not supported yet")
 
+        print('PREPARE -RANDOM- POLICY')
+        if algo == "PPO2":
+            self.random_policy = PPO2(
+                OtherMlpPolicy,
+                # env=DummyVecEnv([lambda : gym.make(self.env_name)]),
+                verbose=1,
+                # tensorboard_log='data/TBlogs/' + self.env_name,
+            )
+        elif algo == "TRPO":
+            print('Using TRPO as the Target Policy Algo')
+
+            self.random_policy = TRPO(
+                OtherMlpPolicy,
+                env=DummyVecEnv([lambda:env]),
+                verbose=1,
+                # disabled tensorboard temporarily
+                tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
+                timesteps_per_batch=args['timesteps_per_batch'],
+                lam=args['lam'],
+                max_kl=args['max_kl'],
+                gamma=args['gamma'],
+                vf_iters=args['vf_iters'],
+                vf_stepsize=args['vf_stepsize'],
+                entcoeff=args['entcoeff'],
+                cg_damping=args['cg_damping'],
+                cg_iters=args['cg_iters']
+            )
+        elif algo == "SAC":
+            print('Using SAC as the Target Policy Algo ')
+            print('using 256 node architecture as in the paper')
+
+            class CustomPolicy(ffp_sac):
+                def __init__(self, *args, **kwargs):
+                    super(CustomPolicy, self).__init__(*args, **kwargs,
+                                                       feature_extraction="mlp", layers=[256, 256])
+
+            self.random_policy = SAC(
+                CustomPolicy,
+                env,
+                verbose=1,
+                tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
+                batch_size=args['batch_size'],
+                buffer_size=args['buffer_size'],
+                ent_coef=args['ent_coef'],
+                learning_starts=args['learning_starts'],
+                learning_rate=args['learning_rate'],
+                train_freq=args['train_freq'],
+            )
+        else:
+            raise NotImplementedError("Algo "+algo+" not supported")
+
     ##### Original
     # def _init_normalization_stats(self, training=False):
     #     print('Using a policy trained in normalized environment.. Loading normalizer')
@@ -1589,17 +1647,34 @@ class ReinforcedGAT:
                                                                               vf=[64, 64])],
                                                                feature_extraction="mlp")
                 cprint('SINGLE BATCH SIZE : ' + str(self.single_batch_size), 'red', attrs=['blink'])
-                self.action_tf_policy = PPO2.load(atp_load_policy,
-                    env=DummyVecEnv([lambda: self.atp_environment]),
-                    nminibatches=nminibatches,
-                    n_steps=self.gsim_trans if self.single_batch_size is None else 5000,
-                    # nminibatches*self.single_batch_size,
-                    ent_coef=ent_coeff,
-                    noptepochs=noptepochs,
-                    lam=0.95,
-                    cliprange=clip_range,
-                    learning_rate=atp_lr,
-                )
+                if isinstance(atp_load_policy, list):
+                    self.action_tf_policy = []
+                    for i in range(len(atp_load_policy)):
+                        self.action_tf_policy.append(
+                            PPO2.load(atp_load_policy[i],
+                                      env=DummyVecEnv([lambda: self.atp_environment]),
+                                      nminibatches=nminibatches,
+                                      n_steps=self.gsim_trans if self.single_batch_size is None else 5000,
+                                      # nminibatches*self.single_batch_size,
+                                      ent_coef=ent_coeff,
+                                      noptepochs=noptepochs,
+                                      lam=0.95,
+                                      cliprange=clip_range,
+                                      learning_rate=atp_lr,
+                                      )
+                        )
+                else:
+                    self.action_tf_policy = PPO2.load(atp_load_policy,
+                        env=DummyVecEnv([lambda: self.atp_environment]),
+                        nminibatches=nminibatches,
+                        n_steps=self.gsim_trans if self.single_batch_size is None else 5000,
+                        # nminibatches*self.single_batch_size,
+                        ent_coef=ent_coeff,
+                        noptepochs=noptepochs,
+                        lam=0.95,
+                        cliprange=clip_range,
+                        learning_rate=atp_lr,
+                    )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported")
 
@@ -1739,6 +1814,14 @@ class ReinforcedGAT:
                                         disc_norm=self.discriminator_norm_x,
                                         disc_sa_norm=self.discriminator_sa_norm_x
                                         )
+
+        # self.atp_environment.env_method("refresh_disc",
+        #                                 target_policy=self.random_policy,
+        #                                 discriminator=self.discriminator,
+        #                                 discriminator_sa=self.discriminator_sa,
+        #                                 disc_norm=self.discriminator_norm_x,
+        #                                 disc_sa_norm=self.discriminator_sa_norm_x
+        #                                 )
 
         self.atp_environment.reset()
 
@@ -1925,6 +2008,7 @@ class ReinforcedGAT:
 
         fake_Ts = collect_gym_trajectories(
             env=grnd_env,
+            # policy=self.random_policy,
             policy=self.target_policy,
             num=int(num_sim_traj),
             add_noise=0.0,
@@ -1994,13 +2078,15 @@ class ReinforcedGAT:
                 X_sa_list.extend(X_sa_list_fake)
                 Y_sa_list.extend(Y_sa_list_fake)
 
-        # # testing adding noise to the discriminator
-        # if iter_step == 0:
-        #     self.instance_noise = 0.001**0.5
-        # else:
-        #     self.instance_noise = self.instance_noise*0.75
-        # if inject_instance_noise:
-        #     X_list = X_list + np.random.normal(0, self.instance_noise, [len(X_list), len(X_list[0])])
+        # testing adding noise to the discriminator
+        if iter_step == 0:
+            self.instance_noise = 0.001**0.5
+        else:
+            self.instance_noise = self.instance_noise*0.75
+        if inject_instance_noise:
+            X_list = X_list + np.random.normal(0, self.instance_noise, [len(X_list), len(X_list[0])])
+            if self.discriminator_sa is not None:
+                X_sa_list = X_sa_list + np.random.normal(0, self.instance_noise, [len(X_sa_list), len(X_sa_list[0])])
 
         print('STARTING TO TRAIN THE DISCRIMINATOR')
 

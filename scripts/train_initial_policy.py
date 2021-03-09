@@ -20,16 +20,16 @@ from gym.wrappers import TimeLimit
 
 ALGO = SAC
 # set the environment here :
-ENV_NAME = 'Hopper-v2' # PointGoal1Heavy, PointGoal2, InvertedPendulum-v2, InvertedPendulumModified-v2, Hopper-v2, HalfCheetah-v2, Walker2d-v2, AntPyBulletEnv-v0, MinitaurBulletEnv-v0
+ENV_NAME = 'HalfCheetah-v2' # PointGoal1Heavy, PointGoal2, InvertedPendulum-v2, InvertedPendulumModified-v2, Hopper-v2, HalfCheetah-v2, Walker2d-v2, AntPyBulletEnv-v0, MinitaurBulletEnv-v0
 # set this to the parent environment
-PARAMS_ENV = 'Hopper-v2'
+PARAMS_ENV = 'HalfCheetah-v2'
 TIME_STEPS = 2000000 # 1000000, 2000000
 INDICATOR = 'tuned_defaultZoo_timeLimit_1'
 NOISE_VALUE = 0.0
 SAVE_BEST_FOR_20 = False
 NORMALIZE = False
 MUJOCO_NORMALIZE = True # True for Minitaur
-TIMEWRAPPER = True # True for Hopper, Walker, Ant
+TIMEWRAPPER = False # True for Hopper, Walker, Ant
 
 if NORMALIZE is True and MUJOCO_NORMALIZE is True:
     raise ValueError('That is not possible !')
