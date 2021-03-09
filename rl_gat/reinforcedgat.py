@@ -371,7 +371,7 @@ class ATPEnv(gym.Wrapper):
             # self.latest_obs = self.normalizer.normalize_obs(self.latest_obs)
             self.latest_obs = self.normalizer.reset(**kwargs)[0]
 
-        self.latest_act, _ = self.target_policy.predict(self.latest_obs, deterministic=True)
+        self.latest_act, _ = self.target_policy.predict(self.latest_obs, deterministic=False)
 
         # create empty list and pad with zeros
         self.prev_frames = []
@@ -410,7 +410,7 @@ class ATPEnv(gym.Wrapper):
         # get target policy action
         # if self.normalizer is not None:
         #     sim_next_state = self.normalizer.normalize_obs(sim_next_state)
-        target_policy_action, _ = self.target_policy.predict(sim_next_state, deterministic=True)
+        target_policy_action, _ = self.target_policy.predict(sim_next_state, deterministic=False)
 
         ###### experimenting with adding noise while training ATPEnv ######
         # target_policy_action = target_policy_action + np.random.normal(0, self.train_noise**0.5, target_policy_action.shape[0])
@@ -780,6 +780,9 @@ class ReinforcedGAT:
     #pylint: disable=too-many-instance-attributes
     def __init__(self,
                  expt_path,
+                 sim_seed,
+                 real_seed,
+                 model_seed=None,
                  expt_label=None,
                  sim_env_name='Hopper-v2',
                  real_env_name='HopperModified-v2',
@@ -802,6 +805,10 @@ class ReinforcedGAT:
                  mujoco_norm=False,
                  time_limit=False,
                  ):
+
+        self.sim_seed = sim_seed #<<<<<------------------------------
+        self.real_seed = real_seed #<<<<<----------------------------
+        self.model_seed = model_seed #<<<<<--------------------------
 
         self.single_batch_size=single_batch_size
         self.tp_algo = algo
@@ -842,6 +849,7 @@ class ReinforcedGAT:
         #     self.real_env = gym.make(self.real_env_name)
         # else:
         env = gym.make(self.real_env_name)
+        env.seed(self.real_seed) #<<<<<-------------------------------
         if self.mujoco_norm: env = MujocoNormalized(env)
         if self.time_limit: env = TimeLimit(env)
         self.real_env = DummyVecEnv([lambda: env])
@@ -849,6 +857,7 @@ class ReinforcedGAT:
         # print('MODIFIED ENV BODY_MASS : ',
         #       gym.make(self.real_env_name).model.body_mass)
         env = gym.make(self.env_name)
+        env.seed(self.sim_seed)  #<<<<<-------------------------------
         if self.mujoco_norm: env = MujocoNormalized(env)
         if self.time_limit: env = TimeLimit(env)
         self.sim_env = DummyVecEnv([lambda: env])
@@ -891,8 +900,9 @@ class ReinforcedGAT:
             args = args['PPO2'][self.env_name]
             self.target_policy = PPO2(
                 OtherMlpPolicy,
-                env=DummyVecEnv([lambda: gym.make(self.env_name)]),
+                # env=DummyVecEnv([lambda: gym.make(self.env_name)]),
                 verbose=1,
+                seed=self.model_seed,  # <<<<<-------------------------
                 n_steps=args['n_steps'],
                 nminibatches=args['nminibatches'],
                 lam=args['lam'],
@@ -908,8 +918,9 @@ class ReinforcedGAT:
             args = args['TRPO'][self.env_name]
             self.target_policy = TRPO(
                 OtherMlpPolicy,
-                env=DummyVecEnv([lambda: gym.make(self.env_name)]),
+                # env=DummyVecEnv([lambda: gym.make(self.env_name)]),
                 verbose=1,
+                seed=self.model_seed,  # <<<<<-------------------------
                 timesteps_per_batch=args['timesteps_per_batch'],
                 lam=args['lam'],
                 max_kl=args['max_kl'],
@@ -935,6 +946,7 @@ class ReinforcedGAT:
             if algo == "PPO2":
                 self.target_policy = PPO2(
                     OtherMlpPolicy,
+                    seed = self.model_seed,
                     # env=DummyVecEnv([lambda : gym.make(self.env_name)]),
                     verbose=1,
                     # tensorboard_log='data/TBlogs/' + self.env_name,
@@ -944,9 +956,10 @@ class ReinforcedGAT:
                 action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
                 self.target_policy = TD3(
                     MlpPolicy,
-                    env = DummyVecEnv([lambda: gym.make(self.env_name)]),
+                    # env = DummyVecEnv([lambda: gym.make(self.env_name)]),
                     # tensorboard_log='data/TBlogs/' + self.env_name,
                     verbose=1,
+                    seed=self.model_seed,
                     batch_size=128,
                     gamma=0.99,
                     learning_rate=0.001,
@@ -960,8 +973,9 @@ class ReinforcedGAT:
 
                 self.target_policy = TRPO(
                     OtherMlpPolicy,
-                    env=DummyVecEnv([lambda:env]),
+                    # env=DummyVecEnv([lambda:env]),
                     verbose=1,
+                    seed=self.model_seed,
                     # disabled tensorboard temporarily
                     tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
                     timesteps_per_batch=args['timesteps_per_batch'],
@@ -981,8 +995,9 @@ class ReinforcedGAT:
 
                 self.target_policy = TRPO_lagrangian(
                     MLPWithSafeValue,
-                    env=DummyVecEnv([lambda:env]),
+                    # env=DummyVecEnv([lambda:env]),
                     verbose=1,
+                    seed=self.model_seed,
                     # disabled tensorboard temporarily
                     tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
                     timesteps_per_batch=args['timesteps_per_batch'],
@@ -1011,8 +1026,9 @@ class ReinforcedGAT:
 
                 self.target_policy = SAC(
                     CustomPolicy,
-                    env,
+                    # env,
                     verbose=1,
+                    seed=self.model_seed,
                     tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
                     batch_size=args['batch_size'],
                     buffer_size=args['buffer_size'],
@@ -1037,6 +1053,7 @@ class ReinforcedGAT:
                 args = args['SAC'][self.env_name]
                 self.target_policy = SAC.load(
                     load_policy,
+                    seed=self.model_seed,
                     # env=DummyVecEnv([lambda: env]),
                     tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
                     verbose=1,
@@ -1052,6 +1069,7 @@ class ReinforcedGAT:
 
                 self.target_policy = PPO2.load(
                     load_policy,
+                    seed=self.model_seed,
                     # env=DummyVecEnv([lambda: env]),
                     # disabled tensorboard temporarily
                     # tensorboard_log='TBlogs/'+self.env_name,
@@ -1073,6 +1091,7 @@ class ReinforcedGAT:
                                                  sigma=0.1 * np.ones(n_actions))
                 self.target_policy = TD3.load(
                     load_policy,
+                    seed=self.model_seed,
                     # env=DummyVecEnv([lambda: env]),
                     # tensorboard_log='data/TBlogs/'+self.env_name,
                     verbose=0,
@@ -1092,6 +1111,7 @@ class ReinforcedGAT:
 
                 self.target_policy = TRPO.load(
                     load_policy,
+                    seed=self.model_seed,
                     # env=DummyVecEnv([lambda:env]),
                     verbose=1,
                     # disabled tensorboard temporarily
@@ -1113,6 +1133,7 @@ class ReinforcedGAT:
 
                 self.target_policy = TRPO_lagrangian.load(
                     load_policy,
+                    seed=self.model_seed,
                     # env=DummyVecEnv([lambda:env]),
                     verbose=1,
                     # disabled tensorboard temporarily
@@ -1137,6 +1158,7 @@ class ReinforcedGAT:
         if algo == "PPO2":
             self.random_policy = PPO2(
                 OtherMlpPolicy,
+                seed=self.model_seed,
                 # env=DummyVecEnv([lambda : gym.make(self.env_name)]),
                 verbose=1,
                 # tensorboard_log='data/TBlogs/' + self.env_name,
@@ -1146,7 +1168,8 @@ class ReinforcedGAT:
 
             self.random_policy = TRPO(
                 OtherMlpPolicy,
-                env=DummyVecEnv([lambda:env]),
+                seed=self.model_seed,
+                # env=DummyVecEnv([lambda:env]),
                 verbose=1,
                 # disabled tensorboard temporarily
                 tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
@@ -1171,8 +1194,9 @@ class ReinforcedGAT:
 
             self.random_policy = SAC(
                 CustomPolicy,
-                env,
+                # env,
                 verbose=1,
+                seed=self.model_seed,
                 tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
                 batch_size=args['batch_size'],
                 buffer_size=args['buffer_size'],
@@ -1320,6 +1344,7 @@ class ReinforcedGAT:
 
         ########### CREATE ACTION TRANSFORMER POLICY ##########
         env = gym.make(self.env_name)
+        env.seed(self.sim_seed) #<<<<<--------------------------------
         if self.mujoco_norm: env = MujocoNormalized(env)
         if self.time_limit: env = TimeLimit(env)
 
@@ -1350,6 +1375,7 @@ class ReinforcedGAT:
                 policy=MlpPolicy,
                 env=DummyVecEnv([lambda: self.atp_environment]),
                 verbose=1,
+                seed=self.model_seed,  # <<<<<-------------------------
                 # tensorboard_log='data/TBlogs/action_transformer_policy',
                 batch_size=2048,
                 buffer_size=1000000,
@@ -1365,6 +1391,7 @@ class ReinforcedGAT:
                 policy=OtherMlpPolicy,
                 env=DummyVecEnv([lambda: self.atp_environment]),
                 verbose=0,
+                seed=self.model_seed,  # <<<<<-------------------------
                 # tensorboard_log='data/TBlogs/action_transformer_policy',
                 timesteps_per_batch=self.gsim_trans, #self.real_trans,
                 lam=0.95,
@@ -1400,6 +1427,7 @@ class ReinforcedGAT:
             self.action_tf_policy = PPO2(
                 policy=OtherMlpPolicy,
                 # policy = CustomPPO2Policy,
+                seed=self.model_seed,  # <<<<<-------------------------
                 env=DummyVecEnv([lambda: self.atp_environment]),
                 nminibatches=nminibatches,
                 n_steps=self.gsim_trans if self.single_batch_size is None else 5000,#nminibatches*self.single_batch_size,
@@ -1430,6 +1458,7 @@ class ReinforcedGAT:
                 env=DummyVecEnv([lambda: self.atp_environment]),
                 # tensorboard_log='data/TBlogs/action_transformer_policy',
                 verbose=0,
+                seed=self.model_seed,  # <<<<<-------------------------
                 batch_size=1024,
                 buffer_size=1000000)
         else:
@@ -1524,6 +1553,7 @@ class ReinforcedGAT:
 
         ########### CREATE ACTION TRANSFORMER POLICY ##########
         env = gym.make(self.env_name)
+        env.seed(self.sim_seed) #<<<<<----------------------------------------
         if self.mujoco_norm: env = MujocoNormalized(env)
         if self.time_limit: env = TimeLimit(env)
 
@@ -1554,6 +1584,7 @@ class ReinforcedGAT:
                 self.action_tf_policy = TD3(
                     policy=MlpPolicy,
                     env=DummyVecEnv([lambda: self.atp_environment]),
+                    seed=self.model_seed,
                     verbose=1,
                     # tensorboard_log='data/TBlogs/action_transformer_policy',
                     batch_size=2048,
@@ -1569,6 +1600,7 @@ class ReinforcedGAT:
                 self.action_tf_policy = TRPO(
                     policy=OtherMlpPolicy,
                     env=DummyVecEnv([lambda: self.atp_environment]),
+                    seed=self.model_seed,
                     verbose=0,
                     # tensorboard_log='data/TBlogs/action_transformer_policy',
                     timesteps_per_batch=self.gsim_trans, #self.real_trans,
@@ -1606,6 +1638,7 @@ class ReinforcedGAT:
                     policy=OtherMlpPolicy,
                     # policy = CustomPPO2Policy,
                     env=DummyVecEnv([lambda: self.atp_environment]),
+                    seed=self.model_seed,
                     nminibatches=nminibatches,
                     n_steps=self.gsim_trans if self.single_batch_size is None else 5000,#nminibatches*self.single_batch_size,
                     ent_coef=ent_coeff,
@@ -1632,6 +1665,7 @@ class ReinforcedGAT:
                 self.action_tf_policy = SAC(
                     policy=SACMlpPolicy,
                     env=DummyVecEnv([lambda: self.atp_environment]),
+                    seed=self.model_seed,
                     # tensorboard_log='data/TBlogs/action_transformer_policy',
                     verbose=0,
                     batch_size=1024,
@@ -1653,6 +1687,7 @@ class ReinforcedGAT:
                         self.action_tf_policy.append(
                             PPO2.load(atp_load_policy[i],
                                       env=DummyVecEnv([lambda: self.atp_environment]),
+                                      seed=self.model_seed,
                                       nminibatches=nminibatches,
                                       n_steps=self.gsim_trans if self.single_batch_size is None else 5000,
                                       # nminibatches*self.single_batch_size,
@@ -1665,15 +1700,15 @@ class ReinforcedGAT:
                         )
                 else:
                     self.action_tf_policy = PPO2.load(atp_load_policy,
-                        env=DummyVecEnv([lambda: self.atp_environment]),
-                        nminibatches=nminibatches,
-                        n_steps=self.gsim_trans if self.single_batch_size is None else 5000,
-                        # nminibatches*self.single_batch_size,
-                        ent_coef=ent_coeff,
-                        noptepochs=noptepochs,
-                        lam=0.95,
-                        cliprange=clip_range,
-                        learning_rate=atp_lr,
+                                                      env=DummyVecEnv([lambda: self.atp_environment]),
+                                                      seed = self.model_seed,
+                                                      nminibatches=nminibatches,
+                                                      n_steps=self.gsim_trans if self.single_batch_size is None else 5000,# nminibatches*self.single_batch_size,
+                                                      ent_coef=ent_coeff,
+                                                      noptepochs=noptepochs,
+                                                      lam=0.95,
+                                                      cliprange=clip_range,
+                                                      learning_rate=atp_lr,
                     )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported")
@@ -1690,6 +1725,7 @@ class ReinforcedGAT:
         else: print('USING STOCHASTIC ATP')
 
         env = gym.make(self.env_name)
+        env.seed(self.sim_seed) #<<<<<----------------------------------------
         if self.mujoco_norm: env = MujocoNormalized(env)
         if self.time_limit: env = TimeLimit(env)
 
@@ -1747,6 +1783,7 @@ class ReinforcedGAT:
         """Tests the grounded environment for action transformation"""
         print("TESTING GROUNDED ENVIRONMENT")
         env = gym.make(self.env_name)
+        env.seed(self.sim_seed) #<<<<<----------------------------------------
         if self.mujoco_norm :
             cprint('Using Custom Mujoco Normalization', 'red','on_yellow')
             env = MujocoNormalized(env)
@@ -1762,7 +1799,7 @@ class ReinforcedGAT:
                                alpha=alpha,
                                debug_mode=True,
                                normalizer=self.target_policy_norm_obs,
-                               use_deterministic=True,
+                               use_deterministic=False,
                                device=self.device,
                                )
 
@@ -1771,7 +1808,7 @@ class ReinforcedGAT:
         for _ in trange(2048):
             time_step_count += 1
             if not random:
-                action, _ = self.target_policy.predict(obs, deterministic=True)
+                action, _ = self.target_policy.predict(obs, deterministic=False)
                 action += np.random.normal(0, 0.01, action.shape[0])
             else:
                 action = self.sim_env.action_space.sample()
@@ -1989,6 +2026,7 @@ class ReinforcedGAT:
             if self.mujoco_norm: env = MujocoNormalized(env)
         else:
             env = gym.make(self.env_name)
+            env.seed(self.sim_seed)  # <<<<<-----------------------------------
             if self.mujoco_norm: env = MujocoNormalized(env)
             if self.time_limit: env = TimeLimit(env)
         # env = gym.make(self.env_name)

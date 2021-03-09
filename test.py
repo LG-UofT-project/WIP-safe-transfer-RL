@@ -113,9 +113,9 @@ def main():
     parser.add_argument('--generator_epochs', default=1, type=int, help="ATP epochs per GAN iteration")
     parser.add_argument('--real_trajs', default=1000, type=int, help="Set max amount of real TRAJECTORIES used")
     parser.add_argument('--sim_trajs', default=1000, type=int, help="Set max amount of sim TRAJECTORIES used")
-    parser.add_argument('--real_trans', default=1000, type=int, help="amount of real world transitions used")
+    parser.add_argument('--real_trans', default=10000, type=int, help="amount of real world transitions used")
     # Actual amount of transitions can be bigger than this number, since this waits for the end of episode.
-    parser.add_argument('--gsim_trans', default=1000, type=int, help="amount of simulator transitions used")
+    parser.add_argument('--gsim_trans', default=10000, type=int, help="amount of simulator transitions used")
     parser.add_argument('--debug', action='store_true', help="DEPRECATED")
     parser.add_argument('--eval', action='store_false', help="set to true to evaluate the agent policy in the real environment, after training in grounded environment")
     parser.add_argument('--eval_ref', action='store_true', help="set to true to evaluate reference policies in the real environment")
@@ -195,6 +195,9 @@ def main():
 
     gatworld = ReinforcedGAT(
         load_policy=args.load_policy_path,
+        sim_seed=args.expt_number,
+        real_seed=args.expt_number,
+        model_seed=args.expt_number,
         num_cores=args.num_cores,
         sim_env_name=args.sim_env,
         real_env_name=args.real_env,
