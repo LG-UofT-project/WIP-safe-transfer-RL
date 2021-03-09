@@ -20,11 +20,11 @@ from gym.wrappers import TimeLimit
 
 ALGO = SAC
 # set the environment here :
-ENV_NAME = 'HalfCheetah-v2' # PointGoal1Heavy, PointGoal2, InvertedPendulum-v2, InvertedPendulumModified-v2, Hopper-v2, HalfCheetah-v2, Walker2d-v2, AntPyBulletEnv-v0, MinitaurBulletEnv-v0
+ENV_NAME = 'HalfCheetah-v2' # Walker2dModified, HopperFrictionModified, PointGoal1Heavy, PointGoal2, InvertedPendulum-v2, InvertedPendulumModified-v2, Hopper-v2, HalfCheetah-v2, Walker2d-v2, AntPyBulletEnv-v0, MinitaurBulletEnv-v0
 # set this to the parent environment
 PARAMS_ENV = 'HalfCheetah-v2'
-TIME_STEPS = 2000000 # 1000000, 2000000
-INDICATOR = 'tuned_defaultZoo_timeLimit_1'
+TIME_STEPS = 1000000 # 1000000, 2000000
+INDICATOR = 'test'
 NOISE_VALUE = 0.0
 SAVE_BEST_FOR_20 = False
 NORMALIZE = False

@@ -1,13 +1,13 @@
 import os
 
 def read_results():
-    folder_name = "data/models/garat/" + "Single_SAC_reset_Walker_GAIL_sim2real_SAC_2000000_3000_50_"
+    folder_name = "data/models/garat/" + "Double_Hopper_10K_GAIL_sim2real_TRPO_2000000_10000_50_"
     # Double_SAC_reset_Hopper_GAIL_sim2real_SAC_2000000_3000_50_
     # Double_SAC_reset_Walker_GAIL_sim2real_SAC_2000000_3000_50_
     # Single_SAC_reset_Hopper_GAIL_sim2real_SAC_2000000_3000_50_
     # Single_SAC_reset_Walker_GAIL_sim2real_SAC_2000000_3000_50_
     total_runs = 5
-    total_groundings = 3
+    total_groundings = 1
     deter_eval = []
     stochastic_eval = []
     for i in range(total_runs):
