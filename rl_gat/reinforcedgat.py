@@ -371,7 +371,7 @@ class ATPEnv(gym.Wrapper):
             # self.latest_obs = self.normalizer.normalize_obs(self.latest_obs)
             self.latest_obs = self.normalizer.reset(**kwargs)[0]
 
-        self.latest_act, _ = self.target_policy.predict(self.latest_obs, deterministic=False)
+        self.latest_act, _ = self.target_policy.predict(self.latest_obs, deterministic=True)
 
         # create empty list and pad with zeros
         self.prev_frames = []
@@ -410,7 +410,7 @@ class ATPEnv(gym.Wrapper):
         # get target policy action
         # if self.normalizer is not None:
         #     sim_next_state = self.normalizer.normalize_obs(sim_next_state)
-        target_policy_action, _ = self.target_policy.predict(sim_next_state, deterministic=False)
+        target_policy_action, _ = self.target_policy.predict(sim_next_state, deterministic=True)
 
         ###### experimenting with adding noise while training ATPEnv ######
         # target_policy_action = target_policy_action + np.random.normal(0, self.train_noise**0.5, target_policy_action.shape[0])
@@ -628,7 +628,7 @@ class GroundedEnv(gym.ActionWrapper):
 
         transformed_action = np.clip(transformed_action, self.low, self.high)
 
-        concat_sa = np.hstack((self.latest_obs, transformed_action))
+        # concat_sa = np.hstack((self.latest_obs, transformed_action))
         # transformed_action = delta_transformed_action
         if self.normalizer is not None:
             self.latest_obs, rew, done, info = self.normalizer.step(transformed_action)
@@ -1159,7 +1159,7 @@ class ReinforcedGAT:
             self.random_policy = PPO2(
                 OtherMlpPolicy,
                 seed=self.model_seed,
-                # env=DummyVecEnv([lambda : gym.make(self.env_name)]),
+                env=DummyVecEnv([lambda:env]),
                 verbose=1,
                 # tensorboard_log='data/TBlogs/' + self.env_name,
             )
@@ -1169,7 +1169,7 @@ class ReinforcedGAT:
             self.random_policy = TRPO(
                 OtherMlpPolicy,
                 seed=self.model_seed,
-                # env=DummyVecEnv([lambda:env]),
+                env=DummyVecEnv([lambda:env]),
                 verbose=1,
                 # disabled tensorboard temporarily
                 tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
@@ -1194,7 +1194,7 @@ class ReinforcedGAT:
 
             self.random_policy = SAC(
                 CustomPolicy,
-                # env,
+                env,
                 verbose=1,
                 seed=self.model_seed,
                 tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
@@ -1799,7 +1799,7 @@ class ReinforcedGAT:
                                alpha=alpha,
                                debug_mode=True,
                                normalizer=self.target_policy_norm_obs,
-                               use_deterministic=False,
+                               use_deterministic=True,
                                device=self.device,
                                )
 
@@ -1808,7 +1808,7 @@ class ReinforcedGAT:
         for _ in trange(2048):
             time_step_count += 1
             if not random:
-                action, _ = self.target_policy.predict(obs, deterministic=False)
+                action, _ = self.target_policy.predict(obs, deterministic=True)
                 action += np.random.normal(0, 0.01, action.shape[0])
             else:
                 action = self.sim_env.action_space.sample()
@@ -2037,7 +2037,7 @@ class ReinforcedGAT:
                                # action_tf_env=self.atp_environment,
                                debug_mode=False,
                                normalizer=self.target_policy_norm_obs,
-                               use_deterministic=False,
+                               use_deterministic=True,
                                atp_policy_noise=0.0,
                                )
 
