@@ -84,62 +84,62 @@ NUM_RL_THREADS = 1
 #     """network that defines the Discriminator"""
 #     def __init__(self, n_feature, n_hidden, action_space, activations=nn.Tanh):
 #         super(Discriminator, self).__init__()
-#
+
 #         self.input_norm = None
-#
+
 #         self.fc_in = nn.Linear(n_feature, n_hidden)
 #         self.fc_h1 = nn.Linear(n_hidden, n_hidden)
 #         self.fc_out = nn.Linear(n_hidden, 1)
-#
+
 #         self.activations = activations
 #         self.action_space = action_space
-#
+
 #         torch.nn.init.xavier_uniform_(self.fc_in.weight)
 #         torch.nn.init.xavier_uniform_(self.fc_h1.weight)
 #         torch.nn.init.xavier_uniform_(self.fc_out.weight)
-#
+
 #     # pylint: disable=arguments-differ
 #     def forward(self, x):
 #         out = self.activations()(self.fc_in(x))
 #         out = self.activations()(self.fc_h1(out))
 #         out = self.fc_out(out)
-#
+
 #         return out
-#
+
 #     def set_input_norm(self, input_norm):
 #         self.input_norm = input_norm
-#
+
 # class Shared_Discriminator(torch.nn.Module):
 #     """network that defines the Discriminator"""
 #     def __init__(self, n_feature, n_hidden, action_space, activations=nn.Tanh):
 #         super(Shared_Discriminator, self).__init__()
-#
+
 #         self.input_norm = None
-#
+
 #         # n_features: dimension of SAS
 #         #-------------------- SA parts -------------------
 #         n_sa_features = int((n_feature - action_space)/2) + action_space # Assume to use single frame
 #         self.fc_in = nn.Linear(n_sa_features, n_hidden)
 #         self.fc_h1 = nn.Linear(n_hidden, n_hidden)
 #         self.fc_out = nn.Linear(n_hidden, 1)
-#
+
 #         self.activations = activations
 #         self.action_space = action_space
 #         self.n_sa_features = n_sa_features
-#
+
 #         torch.nn.init.xavier_uniform_(self.fc_in.weight)
 #         torch.nn.init.xavier_uniform_(self.fc_h1.weight)
 #         torch.nn.init.xavier_uniform_(self.fc_out.weight)
-#
+
 #         #-------------------- SAS parts -------------------
 #         self.fc_in_adv = nn.Linear(n_feature, n_hidden)
 #         self.fc_h1_adv = nn.Linear(n_hidden, n_hidden)
 #         self.fc_out_adv = nn.Linear(n_hidden, 1)
-#
+
 #         torch.nn.init.xavier_uniform_(self.fc_in_adv.weight)
 #         torch.nn.init.xavier_uniform_(self.fc_h1_adv.weight)
 #         torch.nn.init.xavier_uniform_(self.fc_out_adv.weight)
-#
+
 #     # pylint: disable=arguments-differ
 #     def forward(self, x):
 #         # x: SAS
@@ -151,13 +151,67 @@ NUM_RL_THREADS = 1
 #         out_sa = self.activations()(self.fc_in(x_sa))
 #         out_sa = self.activations()(self.fc_h1(out_sa))
 #         out_sa = self.fc_out(out_sa)
-#
+
 #         #-------------------- SAS parts -------------------
 #         out_sas = self.activations()(self.fc_in_adv(x))
 #         out_sas = self.activations()(self.fc_h1_adv(out_sas))
 #         out_sas = self.fc_out_adv(out_sas)
-#
+
 #         return [out_sa, out_sas]
+
+#     def set_input_norm(self, input_norm):
+#         self.input_norm = input_norm
+
+
+# class Discriminator_diff(torch.nn.Module):
+#     """network that defines the Discriminator"""
+#     def __init__(self, n_feature, n_hidden, action_space, activations=nn.Tanh):
+#         super(Discriminator_diff, self).__init__()
+#
+#         self.input_norm = None
+#
+#         n_sa_features = int((n_feature - action_space)/2) + action_space # Assume to use single frame
+#         self.fc_in = nn.Linear(n_sa_features, n_hidden)
+#         self.fc_h1 = nn.Linear(n_hidden, n_hidden)
+#         self.fc_h2 = nn.Linear(n_hidden, n_hidden)
+#         # self.fc_h3 = nn.Linear(n_hidden, n_hidden)
+#         self.fc_out = nn.Linear(n_hidden, 1)
+#
+#         self.single_fc = nn.Linear(n_sa_features, 1)
+#
+#         self.activations = activations
+#         self.action_space = action_space
+#         self.n_s_features = int((n_feature - action_space)/2)
+#
+#         torch.nn.init.xavier_uniform_(self.fc_in.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_h1.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_h2.weight)
+#         torch.nn.init.xavier_uniform_(self.fc_out.weight)
+#         torch.nn.init.xavier_uniform_(self.single_fc.weight)
+#
+#
+#     # pylint: disable=arguments-differ
+#     def forward(self, x):
+#         # x: SAS
+#         if len(x.shape) == 1:
+#             # cx = x[0:self.n_s_features]
+#             x_sa = x[self.n_s_features:]
+#             x_sa[-self.n_s_features:] = x_sa[-self.n_s_features:] - x[0:self.n_s_features]
+#         else:
+#             # cx = x[:,0:self.n_s_features]
+#             x_sa = x[:,self.n_s_features:]
+#             x_sa[:,-self.n_s_features:] = x_sa[:,-self.n_s_features:] - x[:,0:self.n_s_features]
+#
+#         out = self.activations()(self.fc_in(x_sa))
+#         out = self.activations()(self.fc_h1(out))
+#         out = self.activations()(self.fc_h2(out))
+#         # out = self.activations()(self.fc_h3(out))
+#         out = self.fc_out(out)
+#
+#         skip = nn.ReLU()(self.single_fc(x_sa))
+#         out = out+skip
+#
+#         return out
 #
 #     def set_input_norm(self, input_norm):
 #         self.input_norm = input_norm
@@ -301,6 +355,7 @@ class ATPEnv(gym.Wrapper):
                  data_collection_mode=False,
                  expt_path=None,
                  shared_double=False,
+                 discriminate_diff=False,
                  ):
         super(ATPEnv, self).__init__(env)
         self.target_policy = target_policy
@@ -320,6 +375,7 @@ class ATPEnv(gym.Wrapper):
         self.discriminator = discriminator
         self.discriminator_sa = discriminator_sa
         self.shared_double = shared_double
+        self.discriminate_diff = discriminate_diff
         self.fwd_model = fwd_model
         self.input_norm = disc_norm
         self.input_sa_norm = disc_sa_norm
@@ -420,9 +476,16 @@ class ATPEnv(gym.Wrapper):
         # use discriminator only if beta is > 0.0
         if self.beta > 0.0:
             # discriminator reward
-            concat_sas = np.concatenate((self.prev_frames,#self.latest_obs,
-                                         # self.latest_act,
-                                         sim_next_state))
+            if self.discriminate_diff:
+                concat_sas = np.concatenate((sim_next_state - self.latest_obs, self.latest_act))
+            elif self.shared_double:
+                concat_sas = np.concatenate((self.latest_obs,
+                                             transformed_action,
+                                             sim_next_state))
+            else:
+                concat_sas = np.concatenate((self.prev_frames,#self.latest_obs,
+                                             # self.latest_act,
+                                             sim_next_state))
 
             concat_sas = apply_norm(concat_sas, self.input_norm[0])
             concat_sas = torch.tensor(concat_sas).float().to(self.device)
@@ -514,7 +577,8 @@ class ATPEnv(gym.Wrapper):
             pickle.dump(self.Ts, open(self.expt_path+'/fake_data.p', "wb"))
 
         # TODO: we should figure out what to do with sim_reward
-        output_reward = disc_rew
+        output_reward = disc_rew #+ self.lam*sim_reward + (1-self.beta)*fwd_rew #- 0.1*np.sum(transformed_action**2)
+        # output_reward = disc_rew - 0.1*np.sum(transformed_action**2)
         if self.discriminator_sa is not None:output_reward = disc_rew - disc_sa_rew
         return concat_sa, output_reward, sim_done, info
 
@@ -617,7 +681,6 @@ class GroundedEnv(gym.ActionWrapper):
             delta_transformed_action = delta_transformed_action / len(self.action_tf_policy)
         else:
             delta_transformed_action, _ = self.action_tf_policy.predict(concat_sa, deterministic=self.use_deterministic)
-
         #NEW : experimenting with adding noise here
         delta_transformed_action += np.random.normal(0, self.atp_policy_noise**0.5, delta_transformed_action.shape[0])
 
@@ -628,7 +691,7 @@ class GroundedEnv(gym.ActionWrapper):
 
         transformed_action = np.clip(transformed_action, self.low, self.high)
 
-        # concat_sa = np.hstack((self.latest_obs, transformed_action))
+        concat_sa = np.hstack((self.latest_obs, transformed_action))
         # transformed_action = delta_transformed_action
         if self.normalizer is not None:
             self.latest_obs, rew, done, info = self.normalizer.step(transformed_action)
@@ -636,6 +699,8 @@ class GroundedEnv(gym.ActionWrapper):
             rew, done, info = rew[0], done[0], info[0]
         else:
             self.latest_obs, rew, done, info = self.env.step(transformed_action)
+
+        info['transformed_action'] = transformed_action
 
         concat_sas = np.hstack((concat_sa, self.latest_obs))
         # if self.normalizer is not None:
@@ -780,10 +845,10 @@ class ReinforcedGAT:
     #pylint: disable=too-many-instance-attributes
     def __init__(self,
                  expt_path,
-                 sim_seed,
-                 real_seed,
-                 model_seed=None,
                  expt_label=None,
+                 sim_seed=None,
+                 real_seed=None,
+                 model_seed=None,
                  sim_env_name='Hopper-v2',
                  real_env_name='HopperModified-v2',
                  frames=1,
@@ -804,6 +869,7 @@ class ReinforcedGAT:
                  shared_double=False,
                  mujoco_norm=False,
                  time_limit=False,
+                 discriminate_diff=False,
                  ):
 
         self.sim_seed = sim_seed #<<<<<------------------------------
@@ -886,6 +952,7 @@ class ReinforcedGAT:
 
         # self.use_wgan = True if atp_loss_function == 'WGAN' else False
         self.shared_double = shared_double
+        self.discriminate_diff = discriminate_diff
 
     ##### Original
     def _randomize_target_policy(self, algo, env=None):
@@ -1111,9 +1178,9 @@ class ReinforcedGAT:
 
                 self.target_policy = TRPO.load(
                     load_policy,
-                    seed=self.model_seed,
                     # env=DummyVecEnv([lambda:env]),
                     verbose=1,
+                    seed=self.model_seed,
                     # disabled tensorboard temporarily
                     tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
                     timesteps_per_batch=args['timesteps_per_batch'],
@@ -1133,9 +1200,9 @@ class ReinforcedGAT:
 
                 self.target_policy = TRPO_lagrangian.load(
                     load_policy,
-                    seed=self.model_seed,
                     # env=DummyVecEnv([lambda:env]),
                     verbose=1,
+                    seed=self.model_seed,
                     # disabled tensorboard temporarily
                     tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
                     timesteps_per_batch=args['timesteps_per_batch'],
@@ -1153,60 +1220,6 @@ class ReinforcedGAT:
                 )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported yet")
-
-        print('PREPARE -RANDOM- POLICY')
-        if algo == "PPO2":
-            self.random_policy = PPO2(
-                OtherMlpPolicy,
-                seed=self.model_seed,
-                env=DummyVecEnv([lambda:env]),
-                verbose=1,
-                # tensorboard_log='data/TBlogs/' + self.env_name,
-            )
-        elif algo == "TRPO":
-            print('Using TRPO as the Target Policy Algo')
-
-            self.random_policy = TRPO(
-                OtherMlpPolicy,
-                seed=self.model_seed,
-                env=DummyVecEnv([lambda:env]),
-                verbose=1,
-                # disabled tensorboard temporarily
-                tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
-                timesteps_per_batch=args['timesteps_per_batch'],
-                lam=args['lam'],
-                max_kl=args['max_kl'],
-                gamma=args['gamma'],
-                vf_iters=args['vf_iters'],
-                vf_stepsize=args['vf_stepsize'],
-                entcoeff=args['entcoeff'],
-                cg_damping=args['cg_damping'],
-                cg_iters=args['cg_iters']
-            )
-        elif algo == "SAC":
-            print('Using SAC as the Target Policy Algo ')
-            print('using 256 node architecture as in the paper')
-
-            class CustomPolicy(ffp_sac):
-                def __init__(self, *args, **kwargs):
-                    super(CustomPolicy, self).__init__(*args, **kwargs,
-                                                       feature_extraction="mlp", layers=[256, 256])
-
-            self.random_policy = SAC(
-                CustomPolicy,
-                env,
-                verbose=1,
-                seed=self.model_seed,
-                tensorboard_log='data/TBlogs/'+self.env_name if tensorboard else None,
-                batch_size=args['batch_size'],
-                buffer_size=args['buffer_size'],
-                ent_coef=args['ent_coef'],
-                learning_starts=args['learning_starts'],
-                learning_rate=args['learning_rate'],
-                train_freq=args['train_freq'],
-            )
-        else:
-            raise NotImplementedError("Algo "+algo+" not supported")
 
     ##### Original
     # def _init_normalization_stats(self, training=False):
@@ -1267,7 +1280,10 @@ class ReinforcedGAT:
         ########### CREATE DISCRIMINATOR ##########
 
         num_inputs = self.sim_env.action_space.shape[0]*(self.frames)
-        num_inputs += self.sim_env.observation_space.shape[0]*(1+self.frames)
+        if self.discriminate_diff:
+            num_inputs += self.sim_env.observation_space.shape[0]
+        else:
+            num_inputs += self.sim_env.observation_space.shape[0]*(1+self.frames)
         # input to the discriminator is S_t, a_t, S_t+1
         if atp_loss_function == 'WGAN':
             cprint('USING WGAN FORMULATION. No output activation', 'red', 'on_yellow')
@@ -1362,6 +1378,7 @@ class ReinforcedGAT:
                                       data_collection_mode=False,
                                       expt_path=self.expt_path,
                                       shared_double=self.shared_double,
+                                      discriminate_diff=self.discriminate_diff,
                                       )
 
         self.atp_environment = DummyVecEnv([lambda : self.atp_environment])
@@ -1477,7 +1494,10 @@ class ReinforcedGAT:
         ########### CREATE DISCRIMINATOR ##########
 
         num_inputs = self.sim_env.action_space.shape[0]*(self.frames)
-        num_inputs += self.sim_env.observation_space.shape[0]*(1+self.frames)
+        if self.discriminate_diff:
+            num_inputs += self.sim_env.observation_space.shape[0]
+        else:
+            num_inputs += self.sim_env.observation_space.shape[0]*(1+self.frames)
         # input to the discriminator is S_t, a_t, S_t+1
         if atp_loss_function == 'WGAN':
             cprint('USING WGAN FORMULATION. No output activation', 'red', 'on_yellow')
@@ -1571,6 +1591,7 @@ class ReinforcedGAT:
                                       data_collection_mode=False,
                                       expt_path=self.expt_path,
                                       shared_double=self.shared_double,
+                                      discriminate_diff=self.discriminate_diff,
                                       )
 
         self.atp_environment = DummyVecEnv([lambda : self.atp_environment])
@@ -1600,8 +1621,8 @@ class ReinforcedGAT:
                 self.action_tf_policy = TRPO(
                     policy=OtherMlpPolicy,
                     env=DummyVecEnv([lambda: self.atp_environment]),
-                    seed=self.model_seed,
                     verbose=0,
+                    seed=self.model_seed,
                     # tensorboard_log='data/TBlogs/action_transformer_policy',
                     timesteps_per_batch=self.gsim_trans, #self.real_trans,
                     lam=0.95,
@@ -1684,6 +1705,7 @@ class ReinforcedGAT:
                 if isinstance(atp_load_policy, list):
                     self.action_tf_policy = []
                     for i in range(len(atp_load_policy)):
+                        print(atp_load_policy[i])
                         self.action_tf_policy.append(
                             PPO2.load(atp_load_policy[i],
                                       env=DummyVecEnv([lambda: self.atp_environment]),
@@ -1700,15 +1722,16 @@ class ReinforcedGAT:
                         )
                 else:
                     self.action_tf_policy = PPO2.load(atp_load_policy,
-                                                      env=DummyVecEnv([lambda: self.atp_environment]),
-                                                      seed = self.model_seed,
-                                                      nminibatches=nminibatches,
-                                                      n_steps=self.gsim_trans if self.single_batch_size is None else 5000,# nminibatches*self.single_batch_size,
-                                                      ent_coef=ent_coeff,
-                                                      noptepochs=noptepochs,
-                                                      lam=0.95,
-                                                      cliprange=clip_range,
-                                                      learning_rate=atp_lr,
+                        env=DummyVecEnv([lambda: self.atp_environment]),
+                        seed = self.model_seed,
+                        nminibatches=nminibatches,
+                        n_steps=self.gsim_trans if self.single_batch_size is None else 5000,
+                        # nminibatches*self.single_batch_size,
+                        ent_coef=ent_coeff,
+                        noptepochs=noptepochs,
+                        lam=0.95,
+                        cliprange=clip_range,
+                        learning_rate=atp_lr,
                     )
             else:
                 raise NotImplementedError("Algo "+algo+" not supported")
@@ -1852,14 +1875,6 @@ class ReinforcedGAT:
                                         disc_sa_norm=self.discriminator_sa_norm_x
                                         )
 
-        # self.atp_environment.env_method("refresh_disc",
-        #                                 target_policy=self.random_policy,
-        #                                 discriminator=self.discriminator,
-        #                                 discriminator_sa=self.discriminator_sa,
-        #                                 disc_norm=self.discriminator_norm_x,
-        #                                 disc_sa_norm=self.discriminator_sa_norm_x
-        #                                 )
-
         self.atp_environment.reset()
 
         # set action transformer_policy in atp env
@@ -1868,7 +1883,8 @@ class ReinforcedGAT:
         # pylint: disable=unexpected-keyword-arg
         self.action_tf_policy.learn(total_timesteps=time_steps if not single_batch_test else 5000,#2*self.single_batch_size,
                                     reset_num_timesteps=False)
-
+        # self.action_tf_policy.learn(total_timesteps=time_steps,
+        #                             reset_num_timesteps=False)
 
     def collect_experience_from_real_env(
             self, constrained = False,
@@ -1956,7 +1972,8 @@ class ReinforcedGAT:
                 # X = np.append(X, T[i + self.frames - 1][1])
 
                 # Append next state S_{t+1}
-                X = np.append(X, T[i + self.frames][0])
+                if not self.discriminate_diff:
+                    X = np.append(X, T[i + self.frames][0])
                 X_list.append(X)
 
                 # Append label = real
@@ -2046,13 +2063,13 @@ class ReinforcedGAT:
 
         fake_Ts = collect_gym_trajectories(
             env=grnd_env,
-            # policy=self.random_policy,
             policy=self.target_policy,
             num=int(num_sim_traj),
             add_noise=0.0,
             limit_trans_count=5000 if single_batch_test else int(self.real_trans),#-int(self.gsim_trans),
             max_timesteps=self.max_real_traj_length[0],
             deterministic=False,
+            transformed_actions=True,
         )
 
         # # gen_fake_Ts = self.atp_environment.env_method('get_fake_trajs')
@@ -2091,7 +2108,8 @@ class ReinforcedGAT:
                     Y_sa_list_fake.append(np.array([0.0]))
 
                 # Append next state S_{t+1}
-                X = np.append(X, T[i + self.frames][0])
+                if not self.discriminate_diff:
+                    X = np.append(X, T[i + self.frames][0])
                 X_list_fake.append(X)
 
                 # Append label = fake

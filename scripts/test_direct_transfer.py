@@ -1,23 +1,24 @@
-import gym, safety_gym
+import gym
 import numpy as np
 import os
 from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
 import random
-from safe_rl_cmdp.trpo_lagrangian import TRPO_lagrangian
-from stable_baselines import TRPO, PPO2
+# from safe_rl_cmdp.trpo_lagrangian import TRPO_lagrangian
+from stable_baselines import TRPO, PPO2, SAC
+from rl_gat import *
 
-ALGO = TRPO_lagrangian
+ALGO = SAC
 # set the environment here :
-REAL_ENV_NAME = 'Safexp-PointGoal1-v0'
-SIM_ENV_NAME = 'Safexp-PointGoal1-v0'
-# set this to the parent environment
-TIME_STEPS = 10000000 # 10000000, 2000000
+REAL_ENV_NAME = 'HalfCheetahModified-v2'
+SIM_ENV_NAME = 'HalfCheetah-v2' # Walker2d, HalfCheetah, Hopper, Walker2dModified, HalfCheetahModified
+TIME_STEPS = 3000000
+INDICATOR = 'seed1'
 
 def evaluate_policy_on_env(env,
                            model,
                            render=True,
                            iters=1,
-                           deterministic=True,
+                           deterministic=False,
                            constrained=False
                            ):
     # model.set_env(env)
@@ -52,67 +53,45 @@ def evaluate_policy_on_env(env,
            np.mean(cost_list), np.std(cost_list)/np.sqrt(len(cost_list))
 
 def test_direct_transfer(algo=ALGO):
-    random.seed(1)
-    np.random.seed(1)
-    # green line
-    test_env = gym.make(REAL_ENV_NAME)
+    random.seed(1000)
+    np.random.seed(1000)
+    sim_policy = 'data/models/' + algo.__name__ + '_initial_policy_steps_' + SIM_ENV_NAME + '_'+str(TIME_STEPS) + '_' + INDICATOR +'_.pkl'
 
-    # sim_policy = '/home/hyunrok/Documents/Backup/Originals_CarGoal1/TRPO_lagrangian_initial_policy_steps_Safexp-CarGoal1-v0_10000000_original_4_.pkl'
-    # sim_policy = '/home/hyunrok/Documents/Backup/Originals_pointGoal1/TRPO_lagrangian_initial_policy_steps_Safexp-PointGoal1-v0_10000000_original_5_.pkl'
-    # sim_policy = 'data/models/' + algo.__name__ + '_initial_policy_steps_' + SIM_ENV_NAME + '_'+str(TIME_STEPS)+'_.pkl'
-    # real_policy = 'data/models/' + algo.__name__ + '_initial_policy_steps_' + REAL_ENV_NAME + '_'+str(TIME_STEPS)+'_.pkl'
-
-    if 'HalfCheetah' in REAL_ENV_NAME or 'Reacher' in REAL_ENV_NAME or 'InvertedPendulum' in REAL_ENV_NAME:
-        sim_policy = sim_policy.replace('10000000_.pkl', '2000000_.pkl')
-        # real_policy = real_policy.replace('10000000_.pkl', '2000000_.pkl')
-
+    constrained = False
     if algo.__name__ == 'PPO2':
         algo = PPO2
     elif algo.__name__ == 'TRPO':
         algo = TRPO
+    elif algo.__name__ == 'SAC':
+        algo = SAC
     elif algo.__name__ == 'TRPO_lagrangian':
         algo = TRPO_lagrangian
         constrained = True
 
-    val = evaluate_policy_on_env(test_env,
-                                 algo.load(sim_policy),
-                                 render=False,
-                                 iters=50,
-                                 deterministic=True,
-                                 constrained=constrained)
-    with open("scripts/transfer_test/eval_at_real.txt", "a") as txt_file:
-        print(val, file=txt_file)
-
-    val = evaluate_policy_on_env(test_env,
+    real_env = gym.make(REAL_ENV_NAME)
+    real_env.seed(1000)
+    val = evaluate_policy_on_env(real_env,
                                  algo.load(sim_policy),
                                  render=False,
                                  iters=50,
                                  deterministic=False,
                                  constrained=constrained)
-    with open("scripts/transfer_test/eval_at_real.txt", "a") as txt_file:
+    with open("scripts/transfer_test/eval_at_real_"+ REAL_ENV_NAME +"_.txt", "a") as txt_file:
         print(val, file=txt_file)
 
-    # # Real policy
-    # del algo  # remove the old algo and reload it.
-    # if algo.__name__ == 'PPO2':
-    #     algo = PPO2
-    # elif algo.__name__ == 'TRPO':
-    #     algo = TRPO
-    # elif algo.__name__ == 'TRPO_lagrangian':
-    #     algo = TRPO_lagrangian
-    #     constrained = True
-    #
-    # val = evaluate_policy_on_env(test_env,
-    #                              algo.load(real_policy),
-    #                              render=False,
-    #                              iters=50,
-    #                              deterministic=True,
-    #                              constrained=constrained)
-    # with open("scripts/transfer_test/eval_at_real.txt", "a") as txt_file:
-    #     print(val, file=txt_file)
+    sim_env = gym.make(SIM_ENV_NAME)
+    sim_env.seed(1000)
+    val = evaluate_policy_on_env(sim_env,
+                                 algo.load(sim_policy),
+                                 render=False,
+                                 iters=50,
+                                 deterministic=False,
+                                 constrained=constrained)
+    with open("scripts/transfer_test/eval_at_sim_"+ SIM_ENV_NAME +"_.txt", "a") as txt_file:
+        print(val, file=txt_file)
+
     os._exit(0)
 
 if __name__ == '__main__':
     test_direct_transfer()
     os._exit(0)
-

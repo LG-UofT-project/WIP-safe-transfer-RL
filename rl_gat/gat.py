@@ -378,7 +378,8 @@ def collect_gym_trajectories(
         add_noise=0.0,
         deterministic=True,
         limit_trans_count=None,
-        constrained = False
+        constrained = False,
+        transformed_actions = False
         ):
     """Generates trajectories from an environment
 
@@ -439,6 +440,12 @@ def collect_gym_trajectories(
                         if constrained: C[e].append(cost)
                         finished[e] = True
             obs, rew, done, info = env.step(action)
+            if transformed_actions:
+                for e in range(num_env):
+                    if not finished[e]:
+                        obs_store = T[e][-1][0]
+                        del T[e][-1]
+                        T[e].append((obs_store, info[e].get('transformed_action')))
             if constrained:
                 cost = info[0].get('cost', 0)
             else:

@@ -152,6 +152,7 @@ def main():
     parser.add_argument('--use_darc', action='store_false', help="set to use reward shaping mechanism from DARC")
     parser.add_argument('--mujoco_norm', action='store_true', help="normalize environment")
     parser.add_argument('--time_limit', action='store_true', help="set maximum episode length")
+    parser.add_argument('--discriminate_diff', action='store_false', help="set to use s'-s")
 
     args = parser.parse_args()
 
@@ -218,6 +219,7 @@ def main():
         shared_double=args.shared_double_discriminators,
         mujoco_norm=args.mujoco_norm,
         time_limit=args.time_limit,
+        discriminate_diff=args.discriminate_diff,
     )
 
     # checkpointing logic ~~ necessary when deploying script on Condor cluster

@@ -181,7 +181,7 @@ register(
 
 register(
     id='HalfCheetahModified-v2',
-    entry_point='rl_gat.envs:HalfCheetahModifiedEnv',
+    entry_point='rl_gat.envs.mujoco:HalfCheetahModifiedEnv',
     max_episode_steps=1000,
     reward_threshold=4800.0,
 )
